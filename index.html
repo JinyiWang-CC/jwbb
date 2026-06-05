@@ -3204,13 +3204,22 @@
     async function reloadState(){
       // 从云端读取主文档
       let mainData = {};
+      let cloudOk = false;
       try{
         const doc = await db.collection('users').doc(currentUserId).get();
         if(doc.exists){
           mainData = doc.data();
           _localCache = Object.assign({}, mainData);
+          cloudOk = true;
+        } else {
+          // 文档不存在，可能是 UID 不对
+          toast('提示：云端未找到数据（UID: ' + currentUserId.slice(0,8) + '...）');
         }
-      }catch(e){ console.warn('cloud load failed, use local cache'); mainData = _localCache; }
+      }catch(e){
+        console.warn('cloud load failed', e);
+        toast('云端数据加载失败，使用本地缓存');
+        mainData = _localCache;
+      }
 
       // 从子集合加载 photos
       let subPhotos = null;
@@ -3259,6 +3268,7 @@
 
       renderAll();
       initHeroPanel();
+      if(cloudOk) toast('数据同步成功 ✦');
     }
 
     // Enter key support
