@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="小宝日记" />
@@ -111,14 +111,14 @@
     .logo-mark{width:42px;height:42px}
     .logo-mark svg{width:26px;height:26px}
     .mobile-tab-bar{display:block}
-    body{padding-top:calc(70px + env(safe-area-inset-top, 0px));padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));height:100vh;overflow:hidden}
-    section{padding:20px 16px 30px;overflow-x:hidden;overflow-y:auto;height:calc(100vh - 70px - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));-webkit-overflow-scrolling:touch}
+    body{padding-top:calc(70px + env(safe-area-inset-top, 0px));padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));height:100vh;overflow:hidden !important;max-width:100vw !important}
+    section{padding:20px 16px 30px;overflow-x:hidden;overflow-y:auto;height:calc(100vh - 70px - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));-webkit-overflow-scrolling:touch;max-width:100vw;width:100%}
     .auth-user-bar{padding:4px 10px 4px 8px;font-size:12px;margin-left:auto}
     .auth-user-bar .au-avatar{width:24px;height:24px;font-size:11px}
     .section-head{flex-direction:row;align-items:center;gap:12px;overflow:hidden;word-break:break-word}
     .section-head h2{font-size:13px;word-break:break-word}
     .eyebrow{font-size:22px}
-    .hero{padding:24px 16px 36px;overflow-y:auto;height:calc(100vh - 70px - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));-webkit-overflow-scrolling:touch}
+    .hero{padding:24px 16px 36px;overflow-y:auto;height:calc(100vh - 70px - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));-webkit-overflow-scrolling:touch;max-width:100vw;width:100%;overflow-x:hidden}
     .hero h1{font-size:clamp(22px,6vw,32px)}
     .hero p.lead{font-size:14px}
     .btn{font-size:13px;padding:10px 16px}
@@ -138,7 +138,14 @@
     .letter-sig{font-size:18px}
     .milestone h4{font-size:17px}
     .milestone p{font-size:13px}
-    .polaroid-caption .title{font-size:18px}
+    .polaroid-caption .title{font-size:14px}
+    .polaroid-caption .date{font-size:10px}
+    .album-cover .album-name{font-size:15px}
+    .album-view-header h3{font-size:20px}
+    .album-view-header .btn{font-size:11px;padding:5px 10px}
+    .album-view{overflow:hidden}
+    .album-view-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+    .album-del-bar{position:fixed;bottom:0;left:0;right:0;z-index:102}
     .day-note{margin-top:18px}
     .day-note textarea{font-size:17px}
     footer{display:none}
@@ -324,7 +331,7 @@
   /* PHOTOS */
   .photos{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
   @media (max-width:880px){.photos{grid-template-columns:repeat(2,1fr);gap:16px}}
-  @media (max-width:540px){.photos{grid-template-columns:repeat(2,1fr);gap:12px}}
+  @media (max-width:540px){.photos{grid-template-columns:repeat(2,1fr);gap:12px}.polaroid{max-width:100%;min-width:0}.album-cover{max-width:100%;min-width:0}}
   .polaroid{background:var(--ivory);padding:14px 14px 18px;box-shadow:var(--shadow-paper);transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s;display:block;border-radius:3px}
   .polaroid:hover{transform:rotate(0deg) translateY(-6px) scale(1.02) !important;box-shadow:var(--shadow-lift);z-index:2;position:relative}
   .polaroid-img{aspect-ratio:var(--ar,1/1);border-radius:2px;overflow:hidden;position:relative;background:var(--paper-deep);cursor:pointer}
@@ -340,12 +347,12 @@
   .album-cover .album-thumb img{width:100%;height:100%;object-fit:cover;display:block}
   .album-cover .album-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px}
   .album-cover .album-name{margin-top:10px;font-family:'Caveat',cursive;font-size:20px;color:var(--ink)}
-  .album-view{position:fixed;inset:0;z-index:100;background:var(--paper);overflow-y:auto;display:none;flex-direction:column}
+  .album-view{position:fixed;inset:0;z-index:100;background:var(--paper);overflow:hidden;display:none;flex-direction:column}
   .album-view.open{display:flex}
-  .album-view-header{position:sticky;top:0;z-index:10;background:rgba(250,246,239,.95);backdrop-filter:blur(10px);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
+  .album-view-header{position:relative;z-index:10;background:rgba(250,246,239,.95);backdrop-filter:blur(10px);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);flex-shrink:0}
   .album-view-header .album-back{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center}
   .album-view-header h3{font-family:'Caveat',cursive;font-size:24px;color:var(--ink);flex:1}
-  .album-view-body{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;flex:1}
+  .album-view-body{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;align-content:start}
   .album-view-body img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;cursor:pointer;transition:transform .2s}
   .album-view-body img:hover{transform:scale(1.03)}
   .album-view-body .album-photo-item{position:relative}
@@ -356,9 +363,10 @@
   .album-view-body .album-photo-item.checked .photo-check{background:var(--accent-deep);border-color:var(--accent-deep)}
   .album-view-body .album-photo-item.checked .photo-check svg{opacity:1}
   .album-view-body.del-mode .album-photo-item .photo-check{display:flex}
-  .album-del-bar{position:sticky;bottom:0;left:0;right:0;background:rgba(255,253,248,.96);backdrop-filter:blur(10px);padding:14px 20px;display:none;align-items:center;gap:14px;border-top:1.5px solid var(--line);justify-content:center}
+  .album-del-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(255,253,248,.96);backdrop-filter:blur(10px);padding:14px 20px;display:none;align-items:center;gap:14px;border-top:1.5px solid var(--line);justify-content:center;z-index:11;flex-shrink:0}
   .album-del-bar.show{display:flex}
   .album-del-bar #albumDelCount{font-size:14px;color:var(--ink-soft);font-weight:600;margin-right:auto}
+  .album-action-bar{position:relative;flex-shrink:0;background:rgba(255,253,248,.96);backdrop-filter:blur(10px);padding:14px 20px;display:flex;align-items:center;gap:12px;border-top:1.5px solid var(--line);z-index:11}
 
   /* PHOTO LIGHTBOX */
   .photo-lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:20px;flex-direction:column;user-select:none;-webkit-user-select:none}
@@ -1160,13 +1168,15 @@
   <div class="album-view-header">
     <button class="album-back" id="albumBackBtn"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
     <h3 id="albumViewTitle">相册</h3>
-    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-      <button class="btn btn-ghost" id="albumAddPhotoBtn" style="font-size:12px;padding:6px 12px">添加照片</button>
-      <button class="btn btn-ghost" id="albumDelModeBtn" style="font-size:12px;padding:6px 12px">删除照片</button>
+    <div class="album-header-actions" style="margin-left:auto;display:flex;gap:8px;align-items:center">
       <button class="btn btn-ghost" id="albumDeleteBtn" style="font-size:12px;padding:6px 12px;color:#c75a5a">删除相册</button>
     </div>
   </div>
   <div class="album-view-body" id="albumViewBody"></div>
+  <div class="album-action-bar" id="albumActionBar">
+    <button class="btn btn-primary" id="albumAddPhotoBtn" style="flex:1">添加照片</button>
+    <button class="btn btn-ghost" id="albumDelModeBtn" style="flex:1">删除照片</button>
+  </div>
   <div class="album-del-bar" id="albumDelBar">
     <span id="albumDelCount">已选 0 张</span>
     <button class="btn btn-primary" id="albumDelConfirmBtn" style="background:#c75a5a">删除选中</button>
@@ -1258,9 +1268,20 @@
   function savePhotosToSub(photos){
     if(!currentUserId) return;
     clearTimeout(_photoSaveTimer);
+    // 立即保存到本地缓存
+    _localCache.photos = photos;
+    try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
     _photoSaveTimer = setTimeout(()=>{
       apiPut('photos', photos).catch(e=>console.warn('savePhotos error', e));
     }, 800);
+  }
+  // 立即保存（用于删除等重要操作）
+  function savePhotosImmediate(photos){
+    if(!currentUserId) return;
+    clearTimeout(_photoSaveTimer);
+    _localCache.photos = photos;
+    try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    apiPut('photos', photos).catch(e=>console.warn('savePhotos error', e));
   }
   async function loadPhotosFromSub(){
     // 照片已在 GET /data 一次性返回，不需要单独加载
@@ -1271,9 +1292,18 @@
   function saveAlbumsToSub(albums){
     if(!currentUserId) return;
     clearTimeout(_albumSaveTimer);
+    _localCache.albums = albums;
+    try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
     _albumSaveTimer = setTimeout(()=>{
       apiPut('albums', albums).catch(e=>console.warn('saveAlbums error', e));
     }, 800);
+  }
+  function saveAlbumsImmediate(albums){
+    if(!currentUserId) return;
+    clearTimeout(_albumSaveTimer);
+    _localCache.albums = albums;
+    try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    apiPut('albums', albums).catch(e=>console.warn('saveAlbums error', e));
   }
   async function loadAlbumsFromSub(){
     return null;
@@ -1458,9 +1488,9 @@
   // 单一真相源:内存 state。从 localStorage 恢复(若可用),改动后回写(失败静默忽略)
   const persisted = loadStore();
   const STATE = {
-    letters:    Array.isArray(persisted.letters)    ? persisted.letters    : JSON.parse(JSON.stringify(DEFAULT_LETTERS)),
-    photos:     Array.isArray(persisted.photos)     ? persisted.photos     : JSON.parse(JSON.stringify(DEFAULT_PHOTOS)),
-    milestones: Array.isArray(persisted.milestones) ? persisted.milestones : JSON.parse(JSON.stringify(DEFAULT_MILESTONES)),
+    letters:    Array.isArray(persisted.letters)    ? persisted.letters    : ('letters' in persisted ? [] : JSON.parse(JSON.stringify(DEFAULT_LETTERS))),
+    photos:     ('photos' in persisted) ? (Array.isArray(persisted.photos) ? persisted.photos : []) : JSON.parse(JSON.stringify(DEFAULT_PHOTOS)),
+    milestones: ('milestones' in persisted) ? (Array.isArray(persisted.milestones) ? persisted.milestones : []) : JSON.parse(JSON.stringify(DEFAULT_MILESTONES)),
     albums:     Array.isArray(persisted.albums)     ? persisted.albums     : []
   };
   function persistState(){
@@ -1471,14 +1501,47 @@
     s.dailyMeta = STATE.dailyMeta || {};
     s.birthDate = STATE.birthDate || '';
     saveStore(s);
-    // 照片和相册独立保存（字段级，不互相覆盖）
-    savePhotosToSub(STATE.photos || []);
-    saveAlbumsToSub(STATE.albums || []);
+    // 照片和相册立即保存（确保删除等操作不丢失）
+    savePhotosImmediate(STATE.photos || []);
+    saveAlbumsImmediate(STATE.albums || []);
+    // 里程碑也立即保存
+    if(currentUserId){
+      apiPut('milestones', STATE.milestones || []).catch(e=>console.warn('saveMilestones error', e));
+    }
     // 更新本地缓存
     _localCache.photos = STATE.photos;
     _localCache.albums = STATE.albums || [];
+    _localCache.milestones = STATE.milestones;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
   }
+
+  // 页面关闭/隐藏时强制刷新待保存数据，防止防抖定时器未触发导致丢数据
+  function flushPendingSaves(){
+    if(!currentUserId) return;
+    clearTimeout(_saveTimer);
+    clearTimeout(_photoSaveTimer);
+    clearTimeout(_albumSaveTimer);
+    const toSave = {};
+    if(STATE.letters) toSave.letters = STATE.letters;
+    if(STATE.milestones) toSave.milestones = STATE.milestones;
+    if(STATE.dailyEvents) toSave.dailyEvents = STATE.dailyEvents;
+    if(STATE.dailyMeta) toSave.dailyMeta = STATE.dailyMeta;
+    if(STATE.birthDate !== undefined) toSave.birthDate = STATE.birthDate;
+    toSave.photos = STATE.photos || [];
+    toSave.albums = STATE.albums || [];
+    // 使用 sendBeacon 确保关闭页面时也能发送
+    const payload = JSON.stringify(toSave);
+    const headers = {'type': 'application/json'};
+    const blob = new Blob([payload], headers);
+    try{
+      navigator.sendBeacon(API_BASE + '/data/batch?token=' + encodeURIComponent(_authToken), blob);
+    }catch(e){
+      // fallback: 普通 fetch（可能被取消）
+      fetch(API_BASE + '/data/batch', {method:'POST', headers:{'Authorization':'Bearer '+_authToken,'Content-Type':'application/json'}, body:payload, keepalive:true}).catch(()=>{});
+    }
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushPendingSaves(); });
+  window.addEventListener('pagehide', flushPendingSaves);
 
   /* -------- LETTERS -------- */
   let lettersSort = 'newest';
@@ -1517,10 +1580,11 @@
   let photosSort = 'newest';
   if(!Array.isArray(STATE.albums)) STATE.albums = [];
 
+  // 照片排序：按时间戳（上传/拍摄时间），先加入的在前面
   function renderPhotos(){
     const list = STATE.photos.slice();
-    if(photosSort==='newest') list.sort((a,b)=>b.ts-a.ts);
-    else list.sort((a,b)=>a.ts-b.ts);
+    if(photosSort==='newest') list.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    else list.sort((a,b)=>(b.ts||0)-(a.ts||0));
     const root = document.getElementById('photosList');
 
     // 预定义角度池，每张卡片取不同角度
@@ -1909,8 +1973,8 @@
     } else {
       // 点击照片区域 → 放大查看（带左右滑动）
       const list = STATE.photos.slice();
-      if(photosSort==='newest') list.sort((a,b)=>b.ts-a.ts);
-      else list.sort((a,b)=>a.ts-b.ts);
+      if(photosSort==='newest') list.sort((a,b)=>(a.ts||0)-(b.ts||0));
+      else list.sort((a,b)=>(b.ts||0)-(a.ts||0));
       const imgList = list.map(p=>({src:p.img, caption:p.title||'', sub:p.date||''}));
       const idx = list.findIndex(p=>p.id===id);
       openLightbox(imgList, idx >= 0 ? idx : 0);
@@ -1946,11 +2010,11 @@
     exitAlbumDelMode();
     renderAlbumPhotos(album);
     document.getElementById('albumView').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    if(window.innerWidth > 768) document.body.style.overflow = 'hidden';
   }
   function closeAlbumView(){
     document.getElementById('albumView').classList.remove('open');
-    document.body.style.overflow = '';
+    if(window.innerWidth > 768) document.body.style.overflow = '';
     currentAlbumId = null;
     exitAlbumDelMode();
   }
@@ -1972,6 +2036,7 @@
     albumDelSelected.clear();
     document.getElementById('albumViewBody').classList.add('del-mode');
     document.getElementById('albumDelBar').classList.add('show');
+    document.getElementById('albumActionBar').style.display = 'none';
     updateAlbumDelCount();
   }
   function exitAlbumDelMode(){
@@ -1979,6 +2044,7 @@
     albumDelSelected.clear();
     document.getElementById('albumViewBody').classList.remove('del-mode');
     document.getElementById('albumDelBar').classList.remove('show');
+    document.getElementById('albumActionBar').style.display = '';
     document.querySelectorAll('#albumViewBody .album-photo-item.checked').forEach(el=>el.classList.remove('checked'));
   }
   function updateAlbumDelCount(){
@@ -2078,13 +2144,13 @@
     _lbItems = items || [];
     _lbIndex = Math.max(0, Math.min(startIndex || 0, _lbItems.length - 1));
     _lbEl.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    if(window.innerWidth > 768) document.body.style.overflow = 'hidden';
     _lbShow();
   }
   function closeLightbox(){
     _lbEl.classList.remove('open');
     _lbImg.src = '';
-    if(!document.getElementById('albumView').classList.contains('open')) document.body.style.overflow = '';
+    if(window.innerWidth > 768 && !document.getElementById('albumView').classList.contains('open')) document.body.style.overflow = '';
   }
   function _lbShow(){
     if(!_lbItems.length) return;
@@ -3169,22 +3235,27 @@
 
       const persisted = mainData;
 
-      // 照片
-      if(Array.isArray(persisted.photos) && persisted.photos.length > 0){
-        STATE.photos = persisted.photos;
+      // 照片：如果云端有 photos 字段（包括空数组）就用它，只有完全没有这个字段时才用默认
+      if('photos' in persisted){
+        STATE.photos = Array.isArray(persisted.photos) ? persisted.photos : [];
       } else {
         STATE.photos = JSON.parse(JSON.stringify(DEFAULT_PHOTOS));
       }
 
       // 相册
-      if(Array.isArray(persisted.albums) && persisted.albums.length > 0){
-        STATE.albums = persisted.albums;
+      if('albums' in persisted){
+        STATE.albums = Array.isArray(persisted.albums) ? persisted.albums : [];
       } else {
         STATE.albums = [];
       }
 
-      STATE.letters    = Array.isArray(persisted.letters)    ? persisted.letters    : JSON.parse(JSON.stringify(DEFAULT_LETTERS));
-      STATE.milestones = Array.isArray(persisted.milestones) ? persisted.milestones : JSON.parse(JSON.stringify(DEFAULT_MILESTONES));
+      STATE.letters    = Array.isArray(persisted.letters)    ? persisted.letters    : ('letters' in persisted ? [] : JSON.parse(JSON.stringify(DEFAULT_LETTERS)));
+      // 里程碑：区分"字段存在但为空"和"字段不存在"
+      if('milestones' in persisted){
+        STATE.milestones = Array.isArray(persisted.milestones) ? persisted.milestones : [];
+      } else {
+        STATE.milestones = JSON.parse(JSON.stringify(DEFAULT_MILESTONES));
+      }
       STATE.dailyEvents = Array.isArray(persisted.dailyEvents) ? persisted.dailyEvents : [];
       STATE.dailyMeta  = (persisted.dailyMeta && typeof persisted.dailyMeta==='object') ? persisted.dailyMeta : {};
       STATE.birthDate  = persisted.birthDate || '';
