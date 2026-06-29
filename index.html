@@ -138,8 +138,8 @@
     .letter-sig{font-size:18px}
     .milestone h4{font-size:17px}
     .milestone p{font-size:13px}
-    .polaroid-caption .title{font-size:14px}
-    .polaroid-caption .date{font-size:10px}
+    .polaroid-caption .title{font-size:13px;line-height:1.35}
+    .polaroid-caption .date{font-size:9px}
     .album-cover .album-name{font-size:15px}
     .album-view-header h3{font-size:20px}
     .album-view-header .btn{font-size:11px;padding:5px 10px}
@@ -336,9 +336,9 @@
   .polaroid:hover{transform:rotate(0deg) translateY(-6px) scale(1.02) !important;box-shadow:var(--shadow-lift);z-index:2;position:relative}
   .polaroid-img{aspect-ratio:var(--ar,1/1);border-radius:2px;overflow:hidden;position:relative;background:var(--paper-deep);cursor:pointer}
   .polaroid-img svg{width:100%;height:100%;display:block}
-  .polaroid-caption{margin-top:14px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-  .polaroid-caption .title{font-family:'Caveat',cursive;font-size:22px;color:var(--ink);line-height:1}
-  .polaroid-caption .date{font-size:11px;color:var(--ink-faint);letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+  .polaroid-caption{margin-top:10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .polaroid-caption .title{font-family:'Nunito','Caveat',system-ui,sans-serif;font-size:15px;color:var(--ink);line-height:1.4;word-break:break-word;overflow-wrap:break-word}
+  .polaroid-caption .date{font-size:11px;color:var(--ink-faint);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;white-space:nowrap;flex-shrink:0}
 
   /* ALBUMS */
   .album-cover{background:var(--ivory);padding:14px;box-shadow:var(--shadow-paper);border-radius:8px;cursor:pointer;transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s;position:relative}
@@ -1214,6 +1214,8 @@
   let _saveTimer = null;
   let _photoSaveTimer = null;
   let _albumSaveTimer = null;
+  let _pollTimer = null;
+  let _lastDataHash = '';
 
   // API 请求工具函数
   async function apiGet(path){
@@ -1243,13 +1245,14 @@
     return _localCache;
   }
 
-  // 云端存储：保存（防抖，每个字段独立写入不会互相覆盖）
+  // 云端存储：保存（用于 hero 面板设置字段）
+  let _storeDebounceTimer = null;
   function saveStore(s){
     if(!currentUserId) return;
     _localCache = s;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-    clearTimeout(_saveTimer);
-    _saveTimer = setTimeout(()=>{
+    clearTimeout(_storeDebounceTimer);
+    _storeDebounceTimer = setTimeout(()=>{
       const toSave = {};
       if(s.letters) toSave.letters = s.letters;
       if(s.milestones) toSave.milestones = s.milestones;
@@ -1261,7 +1264,8 @@
       if(s.nickname !== undefined) toSave.nickname = s.nickname;
       if(s.username) toSave.username = s.username;
       apiBatch(toSave).catch(e=>console.warn('saveStore error',e));
-    }, 500);
+      _lastDataHash = JSON.stringify(_localCache);
+    }, 1000);
   }
 
   // ---- 照片存储（字段级，不再需要子集合） ----
@@ -1494,7 +1498,7 @@
     albums:     Array.isArray(persisted.albums)     ? persisted.albums     : []
   };
   let _persistTimer = null;
-  function persistState(immediate){
+  function persistState(){
     // 更新内存缓存
     _localCache.letters = STATE.letters;
     _localCache.milestones = STATE.milestones;
@@ -1505,12 +1509,38 @@
     _localCache.birthDate = STATE.birthDate || '';
     // 写入 localStorage（总是立即）
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-    // 写入云端
+    // 立即写入云端（每次都同步，确保多设备一致）
     if(!currentUserId) return;
     clearTimeout(_saveTimer);
     clearTimeout(_photoSaveTimer);
     clearTimeout(_albumSaveTimer);
-    const doSave = ()=>{
+    clearTimeout(_persistTimer);
+    const toSave = {
+      letters: STATE.letters || [],
+      milestones: STATE.milestones || [],
+      photos: STATE.photos || [],
+      albums: STATE.albums || [],
+      dailyEvents: STATE.dailyEvents || [],
+      dailyMeta: STATE.dailyMeta || {},
+      birthDate: STATE.birthDate || ''
+    };
+    apiBatch(toSave).catch(e=>console.warn('persistState batch error', e));
+    // 更新数据指纹，避免轮询时把自己的更改误判为云端变化
+    _lastDataHash = JSON.stringify(_localCache);
+  }
+  // 防抖版本（仅用于高频输入场景如打字）
+  function persistStateDebounced(){
+    _localCache.letters = STATE.letters;
+    _localCache.milestones = STATE.milestones;
+    _localCache.photos = STATE.photos;
+    _localCache.albums = STATE.albums || [];
+    _localCache.dailyEvents = STATE.dailyEvents || [];
+    _localCache.dailyMeta = STATE.dailyMeta || {};
+    _localCache.birthDate = STATE.birthDate || '';
+    try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    if(!currentUserId) return;
+    clearTimeout(_persistTimer);
+    _persistTimer = setTimeout(()=>{
       const toSave = {
         letters: STATE.letters || [],
         milestones: STATE.milestones || [],
@@ -1520,15 +1550,9 @@
         dailyMeta: STATE.dailyMeta || {},
         birthDate: STATE.birthDate || ''
       };
-      apiBatch(toSave).catch(e=>console.warn('persistState batch error', e));
-    };
-    if(immediate){
-      clearTimeout(_persistTimer);
-      doSave();
-    } else {
-      clearTimeout(_persistTimer);
-      _persistTimer = setTimeout(doSave, 800);
-    }
+      apiBatch(toSave).catch(e=>console.warn('persistState debounced error', e));
+      _lastDataHash = JSON.stringify(_localCache);
+    }, 1500);
   }
 
   // 页面关闭/隐藏时强制刷新待保存数据，防止防抖定时器未触发导致丢数据
@@ -1538,6 +1562,7 @@
     clearTimeout(_photoSaveTimer);
     clearTimeout(_albumSaveTimer);
     clearTimeout(_persistTimer);
+    clearTimeout(_storeDebounceTimer);
     const toSave = {};
     if(STATE.letters) toSave.letters = STATE.letters;
     if(STATE.milestones) toSave.milestones = STATE.milestones;
@@ -1794,7 +1819,7 @@
     const id = card.dataset.id;
     if(e.target.closest('.del')){
       if(await askConfirm('确定要删除这条寄语吗?删除后无法恢复。','删除寄语')){
-        STATE.letters = STATE.letters.filter(x=>x.id!==id); persistState(true);
+        STATE.letters = STATE.letters.filter(x=>x.id!==id); persistState();
         renderLetters(); toast('已删除');
       }
     } else if(e.target.closest('.edit')){
@@ -1974,7 +1999,7 @@
     const id = card.dataset.id;
     if(e.target.closest('.del')){
       if(await askConfirm('确定要删除这张照片吗?删除后无法恢复。','删除照片')){
-        STATE.photos = STATE.photos.filter(x=>x.id!==id); persistState(true);
+        STATE.photos = STATE.photos.filter(x=>x.id!==id); persistState();
         renderPhotos(); toast('已删除');
       }
     } else if(e.target.closest('.edit')){
@@ -2082,7 +2107,7 @@
     album.photos = album.photos.filter(p=>!albumDelSelected.has(p.id));
     if(album.photos.length) album.cover = album.photos[0].img;
     else album.cover = '';
-    persistState(true);
+    persistState();
     exitAlbumDelMode();
     renderAlbumPhotos(album);
     renderPhotos();
@@ -2095,7 +2120,7 @@
     const ok = await askConfirm('删除整个相册及其中的照片吗?', '删除相册');
     if(!ok) return;
     STATE.albums = STATE.albums.filter(a=>a.id!==currentAlbumId);
-    persistState(true);
+    persistState();
     closeAlbumView();
     renderPhotos();
     toast('相册已删除');
@@ -2264,7 +2289,7 @@
     const id = card.dataset.id;
     if(e.target.closest('.del')){
       if(await askConfirm('确定要删除这条里程碑吗?删除后无法恢复。','删除里程碑')){
-        STATE.milestones = STATE.milestones.filter(x=>x.id!==id); persistState(true);
+        STATE.milestones = STATE.milestones.filter(x=>x.id!==id); persistState();
         renderMilestones(); toast('已删除');
       }
     } else if(e.target.closest('.edit')){
@@ -2916,7 +2941,7 @@
     });
   });
   document.getElementById('dayNoteInput').addEventListener('input', e=>{
-    const m = getMeta(currentDate); m.note = e.target.value; persistState();
+    const m = getMeta(currentDate); m.note = e.target.value; persistStateDebounced();
   });
 
   // summary 卡片点击:打开 drawer / 快速 +
@@ -3217,6 +3242,7 @@
 
     // Logout
     logoutBtn.addEventListener('click', () => {
+      stopPolling();
       currentUserId = null;
       _authToken = null;
       _localCache = {};
@@ -3234,6 +3260,8 @@
       userDisplay.textContent = username;
       // 保存登录状态（含 token）
       try{ localStorage.setItem('jwbb_session', JSON.stringify({username, uid: currentUserId, token: _authToken})); }catch(e){}
+      // 启动实时轮询
+      startPolling();
     }
 
     // Reload STATE from cloud & re-render
@@ -3251,21 +3279,41 @@
 
       const persisted = mainData;
 
-      // 如果云端为空（全新账号）但本地有数据，自动把本地推到云端
-      const cloudIsEmpty = cloudOk && Object.keys(mainData).length === 0;
-      const localHasData = _localCache && (Array.isArray(_localCache.letters) && _localCache.letters.length > 0 || Array.isArray(_localCache.photos) && _localCache.photos.length > 0 || Array.isArray(_localCache.milestones) && _localCache.milestones.length > 0);
+      // 智能合并：如果本地某个字段的数据比云端多，以本地为准并推送到云端
+      if(cloudOk && _localCache && Object.keys(_localCache).length > 0){
+        let needPush = false;
+        const merged = Object.assign({}, persisted);
 
-      if(cloudIsEmpty && localHasData){
-        // 本地有数据但云端为空 → 把本地数据推到云端
-        toast('正在同步本地数据到云端...');
-        try{
-          await apiBatch(_localCache);
-          toast('本地数据已同步到云端 ✦');
-        }catch(e){
-          console.warn('auto-push to cloud failed', e);
+        // 对比每个数组字段：取本地和云端中数据更多的那个
+        const arrayFields = ['letters', 'milestones', 'photos', 'albums', 'dailyEvents'];
+        arrayFields.forEach(field => {
+          const cloudArr = Array.isArray(persisted[field]) ? persisted[field] : [];
+          const localArr = Array.isArray(_localCache[field]) ? _localCache[field] : [];
+          if(localArr.length > cloudArr.length){
+            merged[field] = localArr;
+            needPush = true;
+          }
+        });
+
+        // 对比 dailyMeta（对象字段：取 key 更多的那个）
+        const cloudMeta = (persisted.dailyMeta && typeof persisted.dailyMeta === 'object') ? persisted.dailyMeta : {};
+        const localMeta = (_localCache.dailyMeta && typeof _localCache.dailyMeta === 'object') ? _localCache.dailyMeta : {};
+        if(Object.keys(localMeta).length > Object.keys(cloudMeta).length){
+          merged.dailyMeta = localMeta;
+          needPush = true;
         }
-        // 用本地缓存作为数据源
-        Object.assign(persisted, _localCache);
+
+        if(needPush){
+          toast('检测到本地有更多数据，正在同步...');
+          try{
+            await apiBatch(merged);
+            toast('数据已同步到云端 ✦');
+          }catch(e){
+            console.warn('merge-push to cloud failed', e);
+          }
+          // 用合并后的数据
+          Object.assign(persisted, merged);
+        }
       }
 
       // 照片：如果有 photos 字段（包括空数组）就用它，只有完全没有这个字段时才用默认
@@ -3310,10 +3358,55 @@
       _localCache.dailyMeta = STATE.dailyMeta;
       try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
 
+      // 记录当前数据指纹，用于轮询比对
+      _lastDataHash = JSON.stringify(_localCache);
+
       renderAll();
       initHeroPanel();
-      if(cloudOk && !cloudIsEmpty) toast('数据同步成功 ✦');
+      if(cloudOk) toast('数据同步成功 ✦');
     }
+
+    // ---- 实时同步：定时轮询云端数据，有变化则自动刷新 ----
+    function startPolling(){
+      stopPolling();
+      _pollTimer = setInterval(async ()=>{
+        if(!currentUserId || !_authToken) return;
+        if(document.visibilityState === 'hidden') return; // 页面不可见时不轮询
+        try{
+          const data = await apiGet('/data');
+          const hash = JSON.stringify(data);
+          if(_lastDataHash && hash !== _lastDataHash){
+            // 云端数据有变化，更新本地
+            _localCache = Object.assign({}, data);
+            try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+
+            if('photos' in data) STATE.photos = Array.isArray(data.photos) ? data.photos : [];
+            if('albums' in data) STATE.albums = Array.isArray(data.albums) ? data.albums : [];
+            if('letters' in data) STATE.letters = Array.isArray(data.letters) ? data.letters : [];
+            if('milestones' in data) STATE.milestones = Array.isArray(data.milestones) ? data.milestones : [];
+            if(Array.isArray(data.dailyEvents)) STATE.dailyEvents = data.dailyEvents;
+            if(data.dailyMeta && typeof data.dailyMeta === 'object') STATE.dailyMeta = data.dailyMeta;
+            if(data.birthDate !== undefined) STATE.birthDate = data.birthDate;
+
+            renderAll();
+            initHeroPanel();
+          }
+          _lastDataHash = hash;
+        }catch(e){
+          // 轮询失败静默忽略
+        }
+      }, 5000); // 每5秒检查一次
+    }
+    function stopPolling(){
+      if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
+    }
+    // 页面可见时恢复轮询，不可见时暂停
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState === 'visible' && currentUserId){
+        // 页面恢复可见时立即拉取一次
+        reloadState();
+      }
+    });
 
     // Enter key support
     document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') loginBtn.click(); });
