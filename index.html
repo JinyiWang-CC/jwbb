@@ -128,7 +128,8 @@
     .care-grid .check-card{min-width:0;overflow:hidden;padding:14px}
     .care-grid .check-grid{grid-template-columns:1fr !important}
     .care-grid .check-card[style*="grid-column:span 2"]{grid-column:span 1}
-    .summary-grid{grid-template-columns:repeat(2,1fr)}
+    .edu-quick-grid{grid-template-columns:repeat(3,1fr) !important}
+    .summary-grid{grid-template-columns:repeat(2,1fr) !important}
     .summary-card .sc-value{font-size:26px}
     .summary-card .sc-title{font-size:12px}
     .daily-date-bar{padding:12px 14px}
@@ -152,7 +153,7 @@
     .drawer{width:100%}
   }
   @media (max-width:380px){
-    .summary-grid{grid-template-columns:1fr}
+    .summary-grid{grid-template-columns:repeat(2,1fr) !important}
     .mobile-tab-bar a{font-size:12px}
     .mobile-tab-bar a svg{width:18px;height:18px}
   }
@@ -459,7 +460,8 @@
   .event-row .ev-time{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--accent-deep);min-width:60px;font-variant-numeric:tabular-nums}
   .event-row .ev-main{flex:1;min-width:0}
   .event-row .ev-amount{font-size:15px;color:var(--ink);font-weight:600}
-  .event-row .ev-note{font-size:12px;color:var(--ink-soft);margin-top:3px;word-break:break-all}
+  .event-row .ev-note{font-size:12px;color:var(--ink-soft);margin-top:3px;word-break:break-all;animation:noteFadeIn .25s ease-out}
+  @keyframes noteFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
   .event-row .ev-actions{display:flex;gap:6px;flex-shrink:0}
   .event-row .ev-actions button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center;color:var(--ink-soft);transition:all .2s;padding:0}
   .event-row .ev-actions button:hover{background:var(--sage);color:var(--ink);border-color:var(--sage-deep)}
@@ -505,6 +507,12 @@
   .check-item.checked .ci-box svg{display:block}
   .check-item .ci-box svg{display:none;width:11px;height:11px;color:#fff}
 
+  /* 早教快速按钮 */
+  .edu-quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .edu-quick-btn{padding:10px 6px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;cursor:pointer;transition:all .2s;font-size:14px;color:var(--ink);font-weight:600;font-family:'Fraunces',serif;user-select:none;text-align:center}
+  .edu-quick-btn:hover{border-color:var(--sage-deep);background:var(--sage)}
+  .edu-quick-btn:active{transform:scale(0.95)}
+
   /* 今日小记 */
   .day-note{background:var(--ivory);border:1.5px solid var(--line);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-paper);position:relative}
   .day-note::before{content:"";position:absolute;top:14px;left:18px;width:48px;height:2px;background:repeating-linear-gradient(90deg,var(--sage-deep) 0 6px,transparent 6px 10px)}
@@ -512,6 +520,34 @@
   .day-note .dn-head h4{font-family:'Fraunces',serif;font-size:17px;color:var(--ink);font-weight:600}
   .day-note textarea{width:100%;border:none;background:transparent;font-family:'Caveat',cursive;font-size:20px;color:var(--ink);line-height:1.6;outline:none;resize:vertical;min-height:80px}
   .day-note textarea::placeholder{color:var(--ink-faint);font-style:italic}
+
+  /* 今日小结 recap */
+  .day-note .trend-btn{margin-left:auto;display:flex;align-items:center;gap:5px;padding:6px 14px;border:1.5px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink-soft);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+  .day-note .trend-btn:hover{border-color:var(--accent);color:var(--accent-deep);background:var(--ivory)}
+  .day-note .trend-btn svg{color:var(--accent-deep)}
+  .daily-recap{font-size:14px;color:var(--ink-soft);line-height:1.8;margin-bottom:12px}
+  .daily-recap .recap-empty{color:var(--ink-faint);font-style:italic;font-size:13px}
+  .daily-recap .recap-item{display:inline-flex;align-items:center;gap:4px;margin-right:16px;margin-bottom:4px}
+  .daily-recap .recap-label{font-weight:700;color:var(--ink)}
+  .daily-recap .recap-val{font-family:'Fraunces',serif;font-weight:600}
+  .dn-divider{height:1px;background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 12px);margin:14px 0}
+  .dn-note-label{font-size:12px;font-weight:700;color:var(--ink-soft);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+
+  /* 趋势图 */
+  .trend-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .trend-metrics{display:flex;flex-wrap:wrap;gap:6px}
+  .tm-btn{padding:6px 12px;border:1.5px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink-soft);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+  .tm-btn:hover{border-color:var(--accent)}
+  .tm-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .trend-range{display:flex;gap:4px}
+  .tr-btn{padding:6px 14px;border:1.5px solid var(--line);border-radius:16px;background:var(--paper);color:var(--ink-soft);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+  .tr-btn.active{background:var(--sage-deep);color:#fff;border-color:var(--sage-deep)}
+  .trend-chart-wrap{background:var(--paper);border-radius:14px;padding:16px;overflow-x:auto}
+  .trend-chart-wrap svg{display:block;margin:0 auto;min-width:320px}
+  .trend-stats{display:flex;gap:20px;margin-top:14px;flex-wrap:wrap}
+  .trend-stats .ts-item{font-size:13px;color:var(--ink-soft)}
+  .trend-stats .ts-label{font-weight:700;color:var(--ink);margin-right:4px}
+  .trend-stats .ts-val{font-family:'Fraunces',serif;font-weight:600;color:var(--accent-deep)}
 
   /* 详细记录 sub-section heading */
   .sub-head{display:flex;align-items:center;gap:10px;margin:28px 0 14px}
@@ -880,7 +916,7 @@
   <div class="section-head reveal">
     <div>
       <span class="eyebrow">— 每日成长记录</span>
-      <h2>宝宝的每一天，都是新冒险</h2>
+      <h2>宝宝的每一天都要认真对待</h2>
     </div>
   </div>
 
@@ -901,20 +937,15 @@
     <button class="dd-today" id="ddToday">回到今天 ✦</button>
   </div>
 
-  <!-- 今日基础信息 -->
-  <div class="day-info-strip reveal">
+  <!-- 今日基础信息（精简：体重 / 体温 / 精神状态） -->
+  <div class="day-info-strip reveal" style="grid-template-columns:repeat(3,1fr);padding:12px 16px;gap:10px">
     <div class="di-item">
-      <div class="di-label">天气</div>
-      <div class="di-value">
-        <select id="diWeather">
-          <option value="">—</option>
-          <option value="☀️ 晴">☀️ 晴</option>
-          <option value="⛅ 多云">⛅ 多云</option>
-          <option value="☁️ 阴">☁️ 阴</option>
-          <option value="🌧 雨">🌧 雨</option>
-          <option value="❄️ 雪">❄️ 雪</option>
-        </select>
-      </div>
+      <div class="di-label">体重 kg</div>
+      <div class="di-value"><input type="number" step="0.01" id="diWeight" placeholder="如 3.50"/></div>
+    </div>
+    <div class="di-item">
+      <div class="di-label">体温 ℃</div>
+      <div class="di-value"><input type="number" step="0.1" id="diTempM" placeholder="36.5"/></div>
     </div>
     <div class="di-item">
       <div class="di-label">精神状态</div>
@@ -927,30 +958,14 @@
         </select>
       </div>
     </div>
-    <div class="di-item">
-      <div class="di-label">早上体温 ℃</div>
-      <div class="di-value"><input type="number" step="0.1" id="diTempM" placeholder="36.5"/></div>
-    </div>
-    <div class="di-item">
-      <div class="di-label">中午体温 ℃</div>
-      <div class="di-value"><input type="number" step="0.1" id="diTempN" placeholder="36.5"/></div>
-    </div>
-    <div class="di-item">
-      <div class="di-label">晚上体温 ℃</div>
-      <div class="di-value"><input type="number" step="0.1" id="diTempE" placeholder="36.5"/></div>
-    </div>
-    <div class="di-item">
-      <div class="di-label">体重 kg</div>
-      <div class="di-value"><input type="number" step="0.01" id="diWeight" placeholder="如 3.50"/></div>
-    </div>
   </div>
-
-  <!-- 核心 5 类记录卡 -->
-  <div class="summary-grid reveal" id="summaryGrid"></div>
 
   <!-- 今日时间线汇总 -->
   <div class="sub-head reveal"><div class="sh-line"></div><h3>今日时间线</h3><div class="sh-line"></div></div>
   <div class="event-list reveal" id="dailyTimeline" style="max-width:760px;margin:0 auto 28px"></div>
+
+  <!-- 核心 5 类记录卡 -->
+  <div class="summary-grid reveal" id="summaryGrid"></div>
 
   <!-- 早教/锻炼 单独卡(类型多元,独立分组) -->
   <div class="sub-head reveal"><div class="sh-line"></div><h3>详细照护</h3><div class="sh-line"></div></div>
@@ -979,20 +994,60 @@
       <div class="cc-head">
         <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
         <h4>早教 / 锻炼</h4>
-        <button class="btn btn-ghost" id="addEduBtn" style="margin-left:auto;padding:6px 14px;font-size:13px">+ 添加项目</button>
+      </div>
+      <div class="edu-quick-grid" id="eduQuickGrid">
+        <button class="edu-quick-btn" data-cat="按摩">💆 按摩</button>
+        <button class="edu-quick-btn" data-cat="大动作">🏃 大动作</button>
+        <button class="edu-quick-btn" data-cat="精细动作">✋ 精细动作</button>
+        <button class="edu-quick-btn" data-cat="语言">💬 语言</button>
+        <button class="edu-quick-btn" data-cat="游戏">🎮 游戏</button>
+        <button class="edu-quick-btn" data-cat="其他">✨ 其他</button>
       </div>
       <div class="event-list" id="eduList"></div>
     </div>
 
-    <!-- 今日小记 -->
-    <div class="day-note reveal" style="grid-column:span 2">
-      <div class="dn-head">
-        <h4>📝 今日小记</h4>
-      </div>
-      <textarea id="dayNoteInput" placeholder="今天的小成就 / 难忘瞬间 / 给未来的话…"></textarea>
     </div>
   </div>
+
+  <!-- 今日小结 + 小记 (页面最后) -->
+  <div class="day-note reveal" style="max-width:760px;margin:24px auto 0">
+    <div class="dn-head">
+      <h4>📝 今日小结</h4>
+      <button class="trend-btn" id="trendBtn" title="趋势图">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M3 16l4-5 3 3 6-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 7h3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        趋势
+      </button>
+    </div>
+    <div class="daily-recap" id="dailyRecap"></div>
+    <div class="dn-divider"></div>
+    <div class="dn-note-label">今日小记</div>
+    <textarea id="dayNoteInput" placeholder="今天的小成就 / 难忘瞬间 / 给未来的话…"></textarea>
+  </div>
 </section>
+
+<!-- ====== TREND CHART OVERLAY ====== -->
+<div class="modal-mask" id="trendModal">
+  <div class="modal" style="max-width:680px">
+    <button class="modal-close" data-close>×</button>
+    <h3>📊 趋势对比</h3>
+    <div class="trend-controls">
+      <div class="trend-metrics" id="trendMetrics">
+        <button class="tm-btn active" data-metric="nurseCount">喂奶次数</button>
+        <button class="tm-btn" data-metric="nurseMl">喂奶量ml</button>
+        <button class="tm-btn" data-metric="sleepTotal">睡眠时长</button>
+        <button class="tm-btn" data-metric="pooCount">大便次数</button>
+        <button class="tm-btn" data-metric="diaperCount">换尿片</button>
+        <button class="tm-btn" data-metric="weight">体重kg</button>
+      </div>
+      <div class="trend-range">
+        <button class="tr-btn active" data-range="7">7天</button>
+        <button class="tr-btn" data-range="14">14天</button>
+      </div>
+    </div>
+    <div class="trend-chart-wrap" id="trendChartWrap"></div>
+    <div class="trend-stats" id="trendStats"></div>
+  </div>
+</div>
 
 <!-- ====== DRAWER (事件详情) ====== -->
 <div class="drawer-mask" id="drawerMask"></div>
@@ -1216,6 +1271,7 @@
   let _albumSaveTimer = null;
   let _pollTimer = null;
   let _lastDataHash = '';
+  let _pendingSave = false; // 标记本地有写入正在等待云端确认
 
   // API 请求工具函数
   async function apiGet(path){
@@ -1263,7 +1319,14 @@
       if(s.dueDate !== undefined) toSave.dueDate = s.dueDate;
       if(s.nickname !== undefined) toSave.nickname = s.nickname;
       if(s.username) toSave.username = s.username;
-      apiBatch(toSave).catch(e=>console.warn('saveStore error',e));
+      _pendingSave = true;
+      apiBatch(toSave).then(()=>{
+        _pendingSave = false;
+        _lastDataHash = JSON.stringify(_localCache);
+      }).catch(e=>{
+        _pendingSave = false;
+        console.warn('saveStore error',e);
+      });
       _lastDataHash = JSON.stringify(_localCache);
     }, 1000);
   }
@@ -1275,8 +1338,16 @@
     // 立即保存到本地缓存
     _localCache.photos = photos;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    _lastDataHash = JSON.stringify(_localCache);
     _photoSaveTimer = setTimeout(()=>{
-      apiPut('photos', photos).catch(e=>console.warn('savePhotos error', e));
+      _pendingSave = true;
+      apiPut('photos', photos).then(()=>{
+        _pendingSave = false;
+        _lastDataHash = JSON.stringify(_localCache);
+      }).catch(e=>{
+        _pendingSave = false;
+        console.warn('savePhotos error', e);
+      });
     }, 800);
   }
   // 立即保存（用于删除等重要操作）
@@ -1285,7 +1356,15 @@
     clearTimeout(_photoSaveTimer);
     _localCache.photos = photos;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-    apiPut('photos', photos).catch(e=>console.warn('savePhotos error', e));
+    _lastDataHash = JSON.stringify(_localCache);
+    _pendingSave = true;
+    apiPut('photos', photos).then(()=>{
+      _pendingSave = false;
+      _lastDataHash = JSON.stringify(_localCache);
+    }).catch(e=>{
+      _pendingSave = false;
+      console.warn('savePhotos error', e);
+    });
   }
   async function loadPhotosFromSub(){
     // 照片已在 GET /data 一次性返回，不需要单独加载
@@ -1524,8 +1603,16 @@
       dailyMeta: STATE.dailyMeta || {},
       birthDate: STATE.birthDate || ''
     };
-    apiBatch(toSave).catch(e=>console.warn('persistState batch error', e));
-    // 更新数据指纹，避免轮询时把自己的更改误判为云端变化
+    _pendingSave = true;
+    apiBatch(toSave).then(()=>{
+      _pendingSave = false;
+      // 写入完成后更新指纹，确保下次轮询不会误判
+      _lastDataHash = JSON.stringify(_localCache);
+    }).catch(e=>{
+      _pendingSave = false;
+      console.warn('persistState batch error', e);
+    });
+    // 立即更新指纹，避免轮询时把自己的更改误判为云端变化
     _lastDataHash = JSON.stringify(_localCache);
   }
   // 防抖版本（仅用于高频输入场景如打字）
@@ -1550,7 +1637,14 @@
         dailyMeta: STATE.dailyMeta || {},
         birthDate: STATE.birthDate || ''
       };
-      apiBatch(toSave).catch(e=>console.warn('persistState debounced error', e));
+      _pendingSave = true;
+      apiBatch(toSave).then(()=>{
+        _pendingSave = false;
+        _lastDataHash = JSON.stringify(_localCache);
+      }).catch(e=>{
+        _pendingSave = false;
+        console.warn('persistState debounced error', e);
+      });
       _lastDataHash = JSON.stringify(_localCache);
     }, 1500);
   }
@@ -2392,12 +2486,6 @@
         return (h?h+'h':'')+(m?m+'min':'');
       }
     },
-    pee: {
-      label:'小便', unit:'次', color:'#8ea286', bg:'#dde4d4',
-      icon:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 3c-3 5-6 8-6 12a6 6 0 0012 0c0-4-3-7-6-12z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
-      fields: ['note'],
-      summary: (evs)=> evs.length ? evs.length+' 次' : '—'
-    },
     poo: {
       label:'大便', unit:'次', color:'#b89a5a', bg:'#f0e3c2',
       icon:'<svg viewBox="0 0 24 24" fill="none"><path d="M8 14c-2 0-3 2-2 4h12c1-2 0-4-2-4 1-2 0-4-2-4 0-3-4-3-4 0-2 0-3 2-2 4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>',
@@ -2405,10 +2493,11 @@
       summary: (evs)=> evs.length ? evs.length+' 次' : '—'
     },
     diaper: {
-      label:'换尿布', unit:'片', color:'#7a96a8', bg:'#dde6ec',
+      label:'换尿片', unit:'次', color:'#7a96a8', bg:'#dde6ec',
       icon:'<svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16v4c0 2-1 4-3 5l-1 1c-1 1-2 1.5-4 1.5s-3-.5-4-1.5l-1-1c-2-1-3-3-3-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 7V5.5a1 1 0 011-1h8a1 1 0 011 1V7" stroke="currentColor" stroke-width="1.5"/><path d="M9 11c1 2 2.5 3 3 3s2-1 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>',
       fields: ['note'],
-      summary: (evs)=> evs.length ? evs.length+' 片' : '—'
+      quickAdd: true,
+      summary: (evs)=> evs.length ? evs.length+' 次' : '—'
     }
   };
 
@@ -2451,11 +2540,8 @@
 
     // 同步基础信息
     const m = getMeta(currentDate);
-    document.getElementById('diWeather').value = m.weather || '';
     document.getElementById('diMood').value = m.mood || '';
     document.getElementById('diTempM').value = m.tempM || '';
-    document.getElementById('diTempN').value = m.tempN || '';
-    document.getElementById('diTempE').value = m.tempE || '';
     document.getElementById('diWeight').value = m.weight || '';
     document.getElementById('dayNoteInput').value = m.note || '';
   }
@@ -2515,14 +2601,14 @@
     const evs = eventsOfDay('edu', currentDate);
     const root = document.getElementById('eduList');
     if(!evs.length){
-      root.innerHTML = '<div style="text-align:center;color:var(--ink-faint);font-size:13px;padding:18px">还没有早教记录，记录第一次小训练吧 ✦</div>';
+      root.innerHTML = '<div style="text-align:center;color:var(--ink-faint);font-size:13px;padding:14px">点击上方按钮快速记录 ✦</div>';
       return;
     }
     root.innerHTML = evs.map(e=>`
       <div class="event-row" data-id="${e.id}" data-type="edu">
         <div class="ev-time">${escapeHTML(e.time||'--:--')}</div>
         <div class="ev-main">
-          <div class="ev-amount">${escapeHTML(e.category||'训练')} · ${escapeHTML(e.item||'')} ${e.durationMin?'· '+e.durationMin+'min':''}</div>
+          <div class="ev-amount">${escapeHTML(e.category||'训练')} ${e.durationMin?'· '+e.durationMin+'min':''}</div>
           ${e.note?`<div class="ev-note">${escapeHTML(e.note)}</div>`:''}
         </div>
         <div class="ev-actions">
@@ -2612,8 +2698,8 @@
       if(e.amount) parts.push('量 '+e.amount);
       return parts.join(' · ') || '大便一次';
     }
-    if(type==='pee') return '小便一次';
-    if(type==='diaper') return '换一片';
+    if(type==='pee') return '尿湿一次';
+    if(type==='diaper') return '换尿片一次';
     return '—';
   }
 
@@ -2809,11 +2895,11 @@
     });
   }
 
-  // ---- 教育 (edu) 单独弹窗,简单 prompt 风格用 drawer 形态复用太重,直接走自带 modal ----
+  // ---- 教育 (edu) 编辑弹窗 ----
   function openEduForm(editId){
     drawerType = 'edu';
     drawerEditing = editId || null;
-    const ev = editId ? STATE.dailyEvents.find(x=>x.id===editId) : {time: nowHHMM(), category:'视觉训练'};
+    const ev = editId ? STATE.dailyEvents.find(x=>x.id===editId) : {time: nowHHMM(), category:'按摩'};
     if(!ev) return;
     const cfg = {label:'早教 / 锻炼', color:'#8ea286', icon:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'};
     document.getElementById('dhTitle').textContent = cfg.label;
@@ -2822,22 +2908,22 @@
     const ic = document.getElementById('dhIcon');
     ic.innerHTML = cfg.icon; ic.style.background = cfg.color;
     const body = document.getElementById('drawerBody');
-    const cat = ev.category||'视觉训练';
+    const cat = ev.category||'按摩';
     body.innerHTML = `
       <div class="ev-form">
         <div class="ef-row">
-          <label>时间（输入4位数字如 0930）</label>
+          <label>时间</label>
           <input type="text" id="evTime" class="time-input" maxlength="5" inputmode="numeric" placeholder="如 09:30" value="${ev.time||nowHHMM()}"/>
         </div>
         <div class="ef-row">
           <label>类别</label>
           <div class="ef-chips" data-key="cat" data-value="${cat}">
-            ${['视觉训练','听觉训练','大动作训练','精细动作'].map(v=>`<div class="ef-chip ${cat===v?'active':''}" data-val="${v}">${v}</div>`).join('')}
+            ${['按摩','大动作','精细动作','语言','游戏','其他'].map(v=>`<div class="ef-chip ${cat===v?'active':''}" data-val="${v}">${v}</div>`).join('')}
           </div>
         </div>
-        <div class="ef-grid">
-          <div class="ef-row"><label>项目</label><input type="text" id="evItem" value="${escapeHTML(ev.item||'')}" placeholder="如:黑白卡/摇铃/趴"/></div>
-          <div class="ef-row"><label>时长 min</label><input type="number" id="evDur" min="0" value="${ev.durationMin||''}"/></div>
+        <div class="ef-row">
+          <label>时长 min</label>
+          <input type="number" id="evDur" min="0" value="${ev.durationMin||''}" placeholder="如 15"/>
         </div>
         <div class="ef-row">
           <label>备注</label>
@@ -2868,11 +2954,44 @@
     const catEl = document.querySelector('.ef-chips[data-key="cat"]');
     return {
       time: document.getElementById('evTime').value || nowHHMM(),
-      category: catEl ? catEl.dataset.value : '视觉训练',
-      item: document.getElementById('evItem').value.trim(),
+      category: catEl ? catEl.dataset.value : '按摩',
       durationMin: +document.getElementById('evDur').value || 0,
       note: document.getElementById('evNote').value.trim()
     };
+  }
+
+  // ---- 快速记录(pee/diaper)编辑弹窗 ----
+  function openQuickEditForm(editId, type){
+    drawerType = type;
+    drawerEditing = editId || null;
+    const ev = editId ? STATE.dailyEvents.find(x=>x.id===editId) : {time: nowHHMM()};
+    if(!ev) return;
+    const cfg = EVENT_TYPES[type];
+    document.getElementById('dhTitle').textContent = cfg.label;
+    const d = parseDate(currentDate);
+    document.getElementById('dhSub').textContent = `${d.getMonth()+1}月${d.getDate()}日 · ${WEEK[d.getDay()]}`;
+    const ic = document.getElementById('dhIcon');
+    ic.innerHTML = cfg.icon; ic.style.background = cfg.color;
+    const body = document.getElementById('drawerBody');
+    body.innerHTML = `
+      <div class="ev-form">
+        <div class="ef-row">
+          <label>时间</label>
+          <input type="text" id="evTime" class="time-input" maxlength="5" inputmode="numeric" placeholder="如 09:30" value="${ev.time||nowHHMM()}"/>
+        </div>
+        <div class="ef-row">
+          <label>备注</label>
+          <textarea id="evNote" placeholder="补充说明（可选）…">${escapeHTML(ev.note||'')}</textarea>
+        </div>
+      </div>
+    `;
+    bindTimeInput(document.getElementById('evTime'));
+    document.querySelector('.drawer-foot').innerHTML = `
+      <button class="btn btn-ghost" id="drawerCancel">取消</button>
+      <button class="btn btn-primary" id="drawerSave">保存修改</button>
+    `;
+    document.getElementById('drawerMask').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
   }
 
   // ---- 主渲染 ----
@@ -2900,8 +3019,9 @@
         label = '早教';
       }
       const detail = e.type==='edu'
-        ? `${escapeHTML(e.category||'')} · ${escapeHTML(e.item||'')} ${e.durationMin?e.durationMin+'min':''}`
+        ? `${escapeHTML(e.category||'')} ${e.durationMin?e.durationMin+'min':''}`
         : (typeCfg ? formatEventDetail(e.type, e) : '');
+      const canQuickEdit = e.type==='edu' || (typeCfg && typeCfg.quickAdd);
       return `
         <div class="event-row" data-evid="${e.id}">
           <div class="ev-time">${escapeHTML(e.time||'--:--')}</div>
@@ -2910,9 +3030,188 @@
             <div class="ev-amount"><span style="color:${color};font-weight:700">${label}</span> ${detail}</div>
             ${e.note?`<div class="ev-note">${escapeHTML(e.note)}</div>`:''}
           </div>
-          <div class="ev-actions"><button class="del" data-id="${e.id}" title="删除"><svg viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5 4V2.5h4V4M4 4l.5 8h5L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+          <div class="ev-actions">
+            ${canQuickEdit?`<button class="edit" data-id="${e.id}" data-type="${e.type}" title="编辑"><svg viewBox="0 0 14 14" fill="none"><path d="M2 12h2l7-7-2-2-7 7v2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>`:''}
+            <button class="del" data-id="${e.id}" title="删除"><svg viewBox="0 0 14 14" fill="none"><path d="M3 4h8M5 4V2.5h4V4M4 4l.5 8h5L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
         </div>`;
     }).join('');
+  }
+
+  // ---- 每日小结文字 ----
+  function renderDailyRecap(){
+    const root = document.getElementById('dailyRecap');
+    if(!root) return;
+    const items = [];
+    // 喂奶
+    const nurseEvs = eventsOfDay('nurse', currentDate);
+    if(nurseEvs.length){
+      const totalMl = nurseEvs.reduce((s,e)=>s+(+e.mlBreast||0)+(+e.mlFormula||0)+(+e.ml||0),0);
+      const totalMin = nurseEvs.reduce((s,e)=>s+(+e.leftMin||0)+(+e.rightMin||0),0);
+      let val = nurseEvs.length + ' 次';
+      if(totalMl) val += ' · '+totalMl+'ml';
+      if(totalMin) val += ' · 亲喂'+totalMin+'min';
+      items.push({label:'喂奶', val});
+    }
+    // 睡眠
+    const sleepEvs = eventsOfDay('sleep', currentDate);
+    if(sleepEvs.length){
+      const total = sleepEvs.reduce((s,e)=>s+(+e.durationMin||0),0);
+      const h = Math.floor(total/60), m = total%60;
+      const val = sleepEvs.length + ' 段 · ' + (h?h+'h':'')+(m?m+'min':'');
+      items.push({label:'睡眠', val});
+    }
+    // 大便
+    const pooEvs = eventsOfDay('poo', currentDate);
+    if(pooEvs.length){
+      const colors = pooEvs.map(e=>e.color).filter(Boolean);
+      const val = pooEvs.length + ' 次' + (colors.length?' · '+[...new Set(colors)].join('/'):'');
+      items.push({label:'大便', val});
+    }
+    // 换尿片
+    const diaperEvs = eventsOfDay('diaper', currentDate);
+    if(diaperEvs.length){
+      items.push({label:'换尿片', val: diaperEvs.length + ' 次'});
+    }
+    // 早教
+    const eduEvs = eventsOfDay('edu', currentDate);
+    if(eduEvs.length){
+      const cats = [...new Set(eduEvs.map(e=>e.category).filter(Boolean))];
+      items.push({label:'早教', val: eduEvs.length + ' 项' + (cats.length?' · '+cats.join('/'):'')});
+    }
+    // 体重
+    const meta = getMeta(currentDate);
+    if(meta.weight){
+      items.push({label:'体重', val: meta.weight + ' kg'});
+    }
+
+    if(!items.length){
+      root.innerHTML = '<div class="recap-empty">今天还没有记录，开始记录后会自动生成小结 ✦</div>';
+      return;
+    }
+    root.innerHTML = items.map(it=>`<span class="recap-item"><span class="recap-label">${it.label}</span><span class="recap-val">${escapeHTML(it.val)}</span></span>`).join('');
+  }
+
+  // ---- 趋势图 ----
+  let trendMetric = 'nurseCount';
+  let trendRange = 7;
+
+  const TREND_METRICS = {
+    nurseCount:  {label:'喂奶次数', unit:'次', color:'#b87a64', getFn:(evs)=>evs.filter(e=>e.type==='nurse').length},
+    nurseMl:     {label:'喂奶量', unit:'ml', color:'#b87a64', getFn:(evs)=>evs.filter(e=>e.type==='nurse').reduce((s,e)=>s+(+e.mlBreast||0)+(+e.mlFormula||0)+(+e.ml||0),0)},
+    sleepTotal:  {label:'睡眠时长', unit:'h', color:'#74a8b8', getFn:(evs)=>evs.filter(e=>e.type==='sleep').reduce((s,e)=>s+(+e.durationMin||0),0)/60},
+    pooCount:    {label:'大便次数', unit:'次', color:'#b89a5a', getFn:(evs)=>evs.filter(e=>e.type==='poo').length},
+    diaperCount: {label:'换尿片', unit:'次', color:'#7a96a8', getFn:(evs)=>evs.filter(e=>e.type==='diaper').length},
+    weight:      {label:'体重', unit:'kg', color:'#8a9a7a', getFn:(evs, meta)=> meta.weight ? +meta.weight : 0}
+  };
+
+  function getTrendData(metric, days){
+    const cfg = TREND_METRICS[metric];
+    if(!cfg) return [];
+    const result = [];
+    const today = new Date();
+    for(let i = days - 1; i >= 0; i--){
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = fmtDate(d);
+      const evs = STATE.dailyEvents.filter(e=>e.date === dateStr);
+      const meta = STATE.dailyMeta[dateStr] || {};
+      const val = cfg.getFn(evs, meta);
+      result.push({date: dateStr, label: (d.getMonth()+1)+'/'+d.getDate(), val: val || 0});
+    }
+    return result;
+  }
+
+  function renderTrendChart(){
+    const wrap = document.getElementById('trendChartWrap');
+    const statsEl = document.getElementById('trendStats');
+    if(!wrap) return;
+    const cfg = TREND_METRICS[trendMetric];
+    const data = getTrendData(trendMetric, trendRange);
+    if(!data.length || data.every(d=>d.val === 0)){
+      wrap.innerHTML = '<div style="text-align:center;color:var(--ink-faint);font-size:14px;padding:40px 0">暂无数据 ✦</div>';
+      statsEl.innerHTML = '';
+      return;
+    }
+
+    const W = Math.max(320, wrap.clientWidth - 32);
+    const H = 240;
+    const padL = 44, padR = 16, padT = 20, padB = 36;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const vals = data.map(d=>d.val);
+    const maxVal = Math.max(...vals, 1);
+    const minVal = Math.min(...vals.filter(v=>v>0), 0);
+    // nice rounding
+    const range = maxVal - minVal || 1;
+    const niceMax = Math.ceil(maxVal * 1.15);
+    const niceMin = minVal > 0 && trendMetric !== 'weight' ? 0 : Math.floor(minVal * 0.85);
+    const niceRange = niceMax - niceMin || 1;
+
+    const xStep = chartW / Math.max(data.length - 1, 1);
+    const points = data.map((d, i)=>{
+      const x = padL + i * xStep;
+      const y = padT + chartH - ((d.val - niceMin) / niceRange) * chartH;
+      return {x, y, ...d};
+    });
+
+    // SVG path
+    const linePath = points.map((p, i)=> (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+    const areaPath = linePath + ` L${points[points.length-1].x.toFixed(1)} ${padT+chartH} L${points[0].x.toFixed(1)} ${padT+chartH} Z`;
+
+    // Y axis labels (4 ticks)
+    let yTicks = '';
+    for(let i = 0; i <= 4; i++){
+      const v = niceMin + (niceRange * i / 4);
+      const y = padT + chartH - (i/4) * chartH;
+      yTicks += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(0,0,0,.06)" stroke-width="1"/>`;
+      yTicks += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="var(--ink-faint)">${v.toFixed(trendMetric==='sleepTotal'?1:0)}</text>`;
+    }
+
+    // X axis labels
+    const xLabels = points.map((p, i)=>{
+      // Show every label if <=7, else every other
+      if(data.length > 7 && i % 2 !== 0 && i !== data.length-1) return '';
+      return `<text x="${p.x}" y="${H-padB+18}" text-anchor="middle" font-size="11" fill="var(--ink-faint)">${p.label}</text>`;
+    }).join('');
+
+    // Dots
+    const dots = points.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="${cfg.color}" stroke="#fff" stroke-width="1.5"/>`).join('');
+
+    // Value labels on hover (title)
+    const hoverDots = points.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="12" fill="transparent" class="hover-dot"><title>${p.label}: ${p.val.toFixed(trendMetric==='sleepTotal'?1:0)} ${cfg.unit}</title></circle>`).join('');
+
+    const svg = `
+      <svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+        <defs>
+          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${cfg.color}" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="${cfg.color}" stop-opacity="0.02"/>
+          </linearGradient>
+        </defs>
+        ${yTicks}
+        <path d="${areaPath}" fill="url(#trendGrad)"/>
+        <path d="${linePath}" fill="none" stroke="${cfg.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+        ${hoverDots}
+        ${xLabels}
+      </svg>
+    `;
+    wrap.innerHTML = svg;
+
+    // Stats
+    const sum = vals.reduce((a,b)=>a+b, 0);
+    const avg = sum / vals.filter(v=>v>0).length || 0;
+    const maxV = Math.max(...vals);
+    const minV = Math.min(...vals.filter(v=>v>0)) || 0;
+    const latest = vals[vals.length-1];
+    statsEl.innerHTML = `
+      <div class="ts-item"><span class="ts-label">最新</span><span class="ts-val">${latest.toFixed(trendMetric==='sleepTotal'?1:0)} ${cfg.unit}</span></div>
+      <div class="ts-item"><span class="ts-label">平均</span><span class="ts-val">${avg.toFixed(trendMetric==='sleepTotal'?1:0)} ${cfg.unit}</span></div>
+      <div class="ts-item"><span class="ts-label">最高</span><span class="ts-val">${maxV.toFixed(trendMetric==='sleepTotal'?1:0)} ${cfg.unit}</span></div>
+      <div class="ts-item"><span class="ts-label">最低</span><span class="ts-val">${minV.toFixed(trendMetric==='sleepTotal'?1:0)} ${cfg.unit}</span></div>
+    `;
   }
 
   function renderDaily(){
@@ -2922,6 +3221,7 @@
     renderCheckGrid('suppGrid', SUPP_ITEMS, 'supps');
     renderCheckGrid('careGrid', CARE_ITEMS, 'cares');
     renderEduList();
+    renderDailyRecap();
   }
 
   // ---- 事件绑定 ----
@@ -2934,8 +3234,8 @@
   document.getElementById('ddToday').onclick = ()=>{ currentDate = todayStr(); renderDaily(); };
 
   // 基础信息字段同步
-  ['diWeather','diMood','diTempM','diTempN','diTempE','diWeight'].forEach(id=>{
-    const map = {diWeather:'weather',diMood:'mood',diTempM:'tempM',diTempN:'tempN',diTempE:'tempE',diWeight:'weight'};
+  ['diMood','diTempM','diWeight'].forEach(id=>{
+    const map = {diMood:'mood',diTempM:'tempM',diWeight:'weight'};
     document.getElementById(id).addEventListener('change', e=>{
       const m = getMeta(currentDate); m[map[id]] = e.target.value; persistState();
     });
@@ -2950,11 +3250,36 @@
     if(addBtn){
       e.stopPropagation();
       const type = addBtn.dataset.add;
-      openDrawer(type); openEventForm(null);
+      const cfg = EVENT_TYPES[type];
+      if(cfg && cfg.quickAdd){
+        // 快速点击 +1，不需要填表单
+        const ev = {id:uid(), type:type, date:currentDate, time:nowHHMM(), note:''};
+        STATE.dailyEvents.push(ev);
+        persistState();
+        renderDailySummary();
+        renderDailyTimeline();
+        toast(cfg.label + ' +1 ✦');
+      }else{
+        openDrawer(type); openEventForm(null);
+      }
       return;
     }
     const card = e.target.closest('.summary-card');
-    if(card) openDrawer(card.dataset.type);
+    if(card){
+      const type = card.dataset.type;
+      const cfg = EVENT_TYPES[type];
+      if(cfg && cfg.quickAdd){
+        // quickAdd 类型点卡片也直接 +1
+        const ev = {id:uid(), type:type, date:currentDate, time:nowHHMM(), note:''};
+        STATE.dailyEvents.push(ev);
+        persistState();
+        renderDailySummary();
+        renderDailyTimeline();
+        toast(cfg.label + ' +1 ✦');
+      }else{
+        openDrawer(type);
+      }
+    }
   });
 
   // drawer 关闭
@@ -2972,7 +3297,19 @@
   document.getElementById('drawer').addEventListener('click', e=>{
     if(e.target.id === 'drawerSave'){
       // 提交表单
-      const data = drawerType==='edu' ? collectEduForm() : collectEventForm();
+      const isEdu = drawerType==='edu';
+      const isQuickEdit = EVENT_TYPES[drawerType] && EVENT_TYPES[drawerType].quickAdd;
+      let data;
+      if(isEdu){
+        data = collectEduForm();
+      }else if(isQuickEdit){
+        data = {
+          time: document.getElementById('evTime').value || nowHHMM(),
+          note: document.getElementById('evNote').value.trim()
+        };
+      }else{
+        data = collectEventForm();
+      }
       if(drawerEditing){
         const it = STATE.dailyEvents.find(x=>x.id===drawerEditing);
         if(it) Object.assign(it, data);
@@ -2983,9 +3320,11 @@
       }
       persistState();
       drawerEditing = null;
-      if(drawerType==='edu'){
+      if(isEdu || isQuickEdit){
         closeDrawer();
-        renderDaily();
+        renderDailySummary();
+        renderDailyTimeline();
+        if(isEdu) renderEduList();
       }else{
         renderDrawer();
         renderDailySummary();
@@ -3038,14 +3377,37 @@
       toast('已删除');
     }
   });
-  document.getElementById('addEduBtn').onclick = ()=> openEduForm(null);
+
+  // 早教快速按钮 — 点击即添加，自动记录当前时间
+  document.getElementById('eduQuickGrid').addEventListener('click', e=>{
+    const btn = e.target.closest('.edu-quick-btn');
+    if(!btn) return;
+    const cat = btn.dataset.cat;
+    const ev = {id:uid(), type:'edu', date:currentDate, time:nowHHMM(), category:cat, durationMin:0, note:''};
+    STATE.dailyEvents.push(ev);
+    persistState();
+    renderEduList();
+    renderDailyTimeline();
+    toast('已记录: ' + cat + ' ✦');
+  });
 
   // 补剂 / 护理 复选交互
   bindCheckGrid('suppGrid','supps');
   bindCheckGrid('careGrid','cares');
 
-  // 时间线删除
+  // 时间线编辑/删除
   document.getElementById('dailyTimeline').addEventListener('click', async e=>{
+    const editBtn = e.target.closest('.edit');
+    if(editBtn){
+      const id = editBtn.dataset.id;
+      const type = editBtn.dataset.type;
+      if(type === 'edu'){
+        openEduForm(id);
+      }else{
+        openQuickEditForm(id, type);
+      }
+      return;
+    }
     const delBtn = e.target.closest('.del');
     if(!delBtn) return;
     const id = delBtn.dataset.id;
@@ -3066,11 +3428,10 @@
     const m = getMeta(currentDate);
     const d = parseDate(currentDate);
     let txt = `📅 ${currentDate} · ${WEEK[d.getDay()]}\n`;
-    if(m.weather) txt += `天气:${m.weather}  `;
-    if(m.mood) txt += `精神:${m.mood}\n`;
-    if(m.tempM||m.tempN||m.tempE) txt += `体温:早${m.tempM||'-'} 中${m.tempN||'-'} 晚${m.tempE||'-'}\n`;
-    if(m.weight) txt += `体重:${m.weight}kg\n`;
-    txt += '\n';
+    if(m.mood) txt += `精神:${m.mood}  `;
+    if(m.tempM) txt += `体温:${m.tempM}℃  `;
+    if(m.weight) txt += `体重:${m.weight}kg`;
+    txt += '\n\n';
     Object.entries(EVENT_TYPES).forEach(([k,c])=>{
       const evs = eventsOfDay(k,currentDate);
       if(!evs.length) return;
@@ -3079,13 +3440,36 @@
       txt += '\n';
     });
     const edu = eventsOfDay('edu',currentDate);
-    if(edu.length){ txt += `【早教】\n`; edu.forEach(e=>{ txt+=`  ${e.time} ${e.category} ${e.item||''} ${e.durationMin?e.durationMin+'min':''}\n`; }); }
+    if(edu.length){ txt += `【早教】\n`; edu.forEach(e=>{ txt+=`  ${e.time} ${e.category} ${e.durationMin?e.durationMin+'min':''}\n`; }); }
     if(m.supps && m.supps.length) txt += `\n💊 补剂:${m.supps.join('、')}\n`;
     if(m.cares && m.cares.length) txt += `🛁 护理:${m.cares.join('、')}\n`;
     if(m.note) txt += `\n📝 ${m.note}\n`;
     try{ navigator.clipboard.writeText(txt); toast('已复制到剪贴板 ✦'); }
     catch(e){ alert(txt); }
   };
+
+  // ---- 趋势图绑定 ----
+  document.getElementById('trendBtn').onclick = ()=>{
+    const modal = document.getElementById('trendModal');
+    modal.classList.add('open');
+    renderTrendChart();
+  };
+  document.getElementById('trendMetrics').addEventListener('click', e=>{
+    const btn = e.target.closest('.tm-btn');
+    if(!btn) return;
+    document.querySelectorAll('.tm-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    trendMetric = btn.dataset.metric;
+    renderTrendChart();
+  });
+  document.querySelectorAll('.tr-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tr-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      trendRange = +btn.dataset.range;
+      renderTrendChart();
+    });
+  });
 
   /* ============================================================
    * TAB-BASED PAGE SWITCHING
@@ -3372,6 +3756,7 @@
       _pollTimer = setInterval(async ()=>{
         if(!currentUserId || !_authToken) return;
         if(document.visibilityState === 'hidden') return; // 页面不可见时不轮询
+        if(_pendingSave) return; // 本地有写入正在等待云端确认，跳过本次轮询
         try{
           const data = await apiGet('/data');
           const hash = JSON.stringify(data);
