@@ -3663,41 +3663,11 @@
 
       const persisted = mainData;
 
-      // 智能合并：如果本地某个字段的数据比云端多，以本地为准并推送到云端
+      // 智能合并：云端数据为准，本地仅作为离线缓存兜底
       if(cloudOk && _localCache && Object.keys(_localCache).length > 0){
-        let needPush = false;
+        // 云端有数据时直接信任云端，避免删除操作被本地旧缓存回滚
         const merged = Object.assign({}, persisted);
-
-        // 对比每个数组字段：取本地和云端中数据更多的那个
-        const arrayFields = ['letters', 'milestones', 'photos', 'albums', 'dailyEvents'];
-        arrayFields.forEach(field => {
-          const cloudArr = Array.isArray(persisted[field]) ? persisted[field] : [];
-          const localArr = Array.isArray(_localCache[field]) ? _localCache[field] : [];
-          if(localArr.length > cloudArr.length){
-            merged[field] = localArr;
-            needPush = true;
-          }
-        });
-
-        // 对比 dailyMeta（对象字段：取 key 更多的那个）
-        const cloudMeta = (persisted.dailyMeta && typeof persisted.dailyMeta === 'object') ? persisted.dailyMeta : {};
-        const localMeta = (_localCache.dailyMeta && typeof _localCache.dailyMeta === 'object') ? _localCache.dailyMeta : {};
-        if(Object.keys(localMeta).length > Object.keys(cloudMeta).length){
-          merged.dailyMeta = localMeta;
-          needPush = true;
-        }
-
-        if(needPush){
-          toast('检测到本地有更多数据，正在同步...');
-          try{
-            await apiBatch(merged);
-            toast('数据已同步到云端 ✦');
-          }catch(e){
-            console.warn('merge-push to cloud failed', e);
-          }
-          // 用合并后的数据
-          Object.assign(persisted, merged);
-        }
+        Object.assign(persisted, merged);
       }
 
       // 照片：如果有 photos 字段（包括空数组）就用它，只有完全没有这个字段时才用默认
