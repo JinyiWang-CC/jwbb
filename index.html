@@ -1278,8 +1278,12 @@
     const resp = await fetch(API_BASE + path, {
       headers: { 'Authorization': 'Bearer ' + _authToken }
     });
-    if(!resp.ok) throw new Error('API error: ' + resp.status);
-    return resp.json();
+    const data = await resp.json();
+    if(!resp.ok){
+      // 返回包含 error 字段的对象，而非 throw，让调用方能区分认证失败和网络错误
+      return data;
+    }
+    return data;
   }
   async function apiPut(field, data){
     await fetch(API_BASE + '/data/' + field, {
@@ -3563,7 +3567,7 @@
       }catch(e){}
     }
 
-    // Login
+    // Login — 完全依赖 Worker 端认证，不使用 localStorage 存密码
     loginBtn.addEventListener('click', async () => {
       const username = document.getElementById('loginUser').value.trim().toLowerCase();
       const password = document.getElementById('loginPass').value;
@@ -3576,47 +3580,50 @@
 
       try{
         const inputHash = await sha256(username + ':' + password);
+        // uid 规则：内置账号用预设 uid，自定义账号用 user_{username}
         const account = ACCOUNTS[username];
+        const uid = account ? account.uid : ('user_' + username);
+        const token = uid + ':' + inputHash;
 
-        if(!account){
-          // 未知用户名 → 检查是否是已注册的自定义账号
-          const savedHash = getSavedHash(username);
-          if(savedHash && savedHash === inputHash){
-            // 自定义账号登录成功
-            currentUserId = 'user_' + username;
-            _authToken = currentUserId + ':' + inputHash;
-            showApp(username);
-            await reloadState();
-            loginError.textContent = '';
-            return;
-          }
+        // 先尝试从云端拉取数据来验证认证
+        let cloudData = null;
+        try{
+          cloudData = await fetch(API_BASE + '/data', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          }).then(r => r.json());
+        }catch(e){
+          loginError.textContent = '网络连接失败，请检查网络后重试';
+          return;
+        }
+
+        if(cloudData && cloudData.error === 'unauthorized'){
           loginError.textContent = '用户名或密码错误';
           return;
         }
 
-        // 内置账号
-        const savedHash = getSavedHash(username);
-        if(!savedHash){
-          // 首次登录：设置密码（任何密码都可以，之后就固定了）
-          saveHash(username, inputHash);
-          currentUserId = account.uid;
-          _authToken = currentUserId + ':' + inputHash;
-          showApp(username);
-          await reloadState();
-          toast('首次登录，密码已设置 ✦');
+        if(!cloudData){
+          loginError.textContent = '登录失败，请重试';
           return;
         }
 
-        if(savedHash !== inputHash){
-          loginError.textContent = '用户名或密码错误';
-          return;
-        }
+        // 认证成功
+        currentUserId = uid;
+        _authToken = token;
 
-        // 验证通过
-        currentUserId = account.uid;
-        _authToken = currentUserId + ':' + inputHash;
+        // 判断是否是首次登录（Worker 端自动注册）
+        const isFirstLogin = !getSavedHash(username);
+        saveHash(username, inputHash);
+
         showApp(username);
-        await reloadState();
+
+        // 直接使用已拉取的云端数据，避免二次请求
+        applyCloudData(cloudData);
+
+        if(isFirstLogin){
+          toast('首次登录，密码已设置 ✦');
+        } else {
+          toast('数据同步成功 ✦');
+        }
         loginError.textContent = '';
       }finally{
         loginBtn.disabled = false;
@@ -3648,6 +3655,56 @@
       startPolling();
     }
 
+    // 将云端数据应用到 STATE 并渲染（供 reloadState 和登录时复用）
+    function applyCloudData(mainData, isReload){
+      const persisted = mainData || {};
+
+      // 照片
+      if('photos' in persisted){
+        STATE.photos = Array.isArray(persisted.photos) ? persisted.photos : [];
+      } else {
+        STATE.photos = JSON.parse(JSON.stringify(DEFAULT_PHOTOS));
+      }
+      // 相册
+      if('albums' in persisted){
+        STATE.albums = Array.isArray(persisted.albums) ? persisted.albums : [];
+      } else {
+        STATE.albums = [];
+      }
+      // 寄语
+      if('letters' in persisted){
+        STATE.letters = Array.isArray(persisted.letters) ? persisted.letters : [];
+      } else {
+        STATE.letters = JSON.parse(JSON.stringify(DEFAULT_LETTERS));
+      }
+      // 里程碑
+      if('milestones' in persisted){
+        STATE.milestones = Array.isArray(persisted.milestones) ? persisted.milestones : [];
+      } else {
+        STATE.milestones = JSON.parse(JSON.stringify(DEFAULT_MILESTONES));
+      }
+
+      STATE.dailyEvents = Array.isArray(persisted.dailyEvents) ? persisted.dailyEvents : [];
+      STATE.dailyMeta  = (persisted.dailyMeta && typeof persisted.dailyMeta==='object') ? persisted.dailyMeta : {};
+      STATE.birthDate  = persisted.birthDate || '';
+
+      // 更新本地缓存
+      _localCache = Object.assign({}, persisted);
+      _localCache.photos = STATE.photos;
+      _localCache.albums = STATE.albums;
+      _localCache.letters = STATE.letters;
+      _localCache.milestones = STATE.milestones;
+      _localCache.dailyEvents = STATE.dailyEvents;
+      _localCache.dailyMeta = STATE.dailyMeta;
+      try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+
+      _lastDataHash = JSON.stringify(_localCache);
+
+      renderAll();
+      initHeroPanel();
+      if(isReload) toast('数据同步成功 ✦');
+    }
+
     // Reload STATE from cloud & re-render
     async function reloadState(){
       let mainData = {};
@@ -3661,63 +3718,15 @@
         mainData = _localCache;
       }
 
-      const persisted = mainData;
-
-      // 智能合并：云端数据为准，本地仅作为离线缓存兜底
-      if(cloudOk && _localCache && Object.keys(_localCache).length > 0){
-        // 云端有数据时直接信任云端，避免删除操作被本地旧缓存回滚
-        const merged = Object.assign({}, persisted);
-        Object.assign(persisted, merged);
+      if(cloudOk && mainData && mainData.error){
+        // 认证失败：token 可能已过期或密码被其他设备修改
+        console.warn('auth failed:', mainData.error);
+        toast('登录已失效，请重新登录');
+        logoutBtn.click();
+        return;
       }
 
-      // 照片：如果有 photos 字段（包括空数组）就用它，只有完全没有这个字段时才用默认
-      if('photos' in persisted){
-        STATE.photos = Array.isArray(persisted.photos) ? persisted.photos : [];
-      } else {
-        STATE.photos = JSON.parse(JSON.stringify(DEFAULT_PHOTOS));
-      }
-
-      // 相册
-      if('albums' in persisted){
-        STATE.albums = Array.isArray(persisted.albums) ? persisted.albums : [];
-      } else {
-        STATE.albums = [];
-      }
-
-      // 寄语
-      if('letters' in persisted){
-        STATE.letters = Array.isArray(persisted.letters) ? persisted.letters : [];
-      } else {
-        STATE.letters = JSON.parse(JSON.stringify(DEFAULT_LETTERS));
-      }
-
-      // 里程碑
-      if('milestones' in persisted){
-        STATE.milestones = Array.isArray(persisted.milestones) ? persisted.milestones : [];
-      } else {
-        STATE.milestones = JSON.parse(JSON.stringify(DEFAULT_MILESTONES));
-      }
-
-      STATE.dailyEvents = Array.isArray(persisted.dailyEvents) ? persisted.dailyEvents : [];
-      STATE.dailyMeta  = (persisted.dailyMeta && typeof persisted.dailyMeta==='object') ? persisted.dailyMeta : {};
-      STATE.birthDate  = persisted.birthDate || '';
-
-      // 更新本地缓存（全字段同步）
-      _localCache = Object.assign({}, persisted);
-      _localCache.photos = STATE.photos;
-      _localCache.albums = STATE.albums;
-      _localCache.letters = STATE.letters;
-      _localCache.milestones = STATE.milestones;
-      _localCache.dailyEvents = STATE.dailyEvents;
-      _localCache.dailyMeta = STATE.dailyMeta;
-      try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-
-      // 记录当前数据指纹，用于轮询比对
-      _lastDataHash = JSON.stringify(_localCache);
-
-      renderAll();
-      initHeroPanel();
-      if(cloudOk) toast('数据同步成功 ✦');
+      applyCloudData(mainData, cloudOk);
     }
 
     // ---- 实时同步：定时轮询云端数据，有变化则自动刷新 ----
@@ -3725,32 +3734,26 @@
       stopPolling();
       _pollTimer = setInterval(async ()=>{
         if(!currentUserId || !_authToken) return;
-        if(document.visibilityState === 'hidden') return; // 页面不可见时不轮询
-        if(_pendingSave) return; // 本地有写入正在等待云端确认，跳过本次轮询
+        if(document.visibilityState === 'hidden') return;
+        if(_pendingSave) return;
         try{
           const data = await apiGet('/data');
+          if(data && data.error === 'unauthorized'){
+            // token 失效（可能密码被其他设备修改），停止轮询并提示重新登录
+            stopPolling();
+            toast('登录已失效，请重新登录');
+            logoutBtn.click();
+            return;
+          }
           const hash = JSON.stringify(data);
           if(_lastDataHash && hash !== _lastDataHash){
-            // 云端数据有变化，更新本地
-            _localCache = Object.assign({}, data);
-            try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-
-            if('photos' in data) STATE.photos = Array.isArray(data.photos) ? data.photos : [];
-            if('albums' in data) STATE.albums = Array.isArray(data.albums) ? data.albums : [];
-            if('letters' in data) STATE.letters = Array.isArray(data.letters) ? data.letters : [];
-            if('milestones' in data) STATE.milestones = Array.isArray(data.milestones) ? data.milestones : [];
-            if(Array.isArray(data.dailyEvents)) STATE.dailyEvents = data.dailyEvents;
-            if(data.dailyMeta && typeof data.dailyMeta === 'object') STATE.dailyMeta = data.dailyMeta;
-            if(data.birthDate !== undefined) STATE.birthDate = data.birthDate;
-
-            renderAll();
-            initHeroPanel();
+            applyCloudData(data, false);
           }
           _lastDataHash = hash;
         }catch(e){
           // 轮询失败静默忽略
         }
-      }, 5000); // 每5秒检查一次
+      }, 5000);
     }
     function stopPolling(){
       if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
@@ -3771,14 +3774,17 @@
       authScreen.style.display = 'none';
     });
 
-    // 自动恢复登录状态（无需网络）
+    // 自动恢复登录状态（需要网络验证）
     try{
       const session = JSON.parse(localStorage.getItem('jwbb_session') || 'null');
       if(session && session.username && session.uid && session.token){
         currentUserId = session.uid;
         _authToken = session.token;
         showApp(session.username);
-        reloadState();
+        // 异步验证 token 是否仍然有效
+        reloadState().catch(()=>{
+          console.warn('session restore failed');
+        });
       } else {
         renderAll();
       }
