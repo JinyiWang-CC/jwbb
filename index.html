@@ -3607,11 +3607,19 @@
         // 先尝试从云端拉取数据来验证认证
         let cloudData = null;
         try{
-          cloudData = await fetch(API_BASE + '/data', {
-            headers: { 'Authorization': 'Bearer ' + token }
-          }).then(r => r.json());
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 15000);
+          const resp = await fetch(API_BASE + '/data', {
+            headers: { 'Authorization': 'Bearer ' + token },
+            signal: ctrl.signal
+          });
+          clearTimeout(timer);
+          cloudData = await resp.json();
         }catch(e){
+          console.error('login fetch error:', e);
           loginError.textContent = '网络连接失败，请检查网络后重试';
+          loginBtn.disabled = false;
+          loginBtn.textContent = '登录';
           return;
         }
 
