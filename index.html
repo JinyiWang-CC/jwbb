@@ -600,6 +600,9 @@
   .auth-user-bar .au-avatar{width:28px;height:28px;border-radius:50%;background:var(--sage);display:grid;place-items:center;color:var(--ink);font-weight:700;font-size:12px}
   .auth-user-bar .au-logout{background:none;border:none;color:var(--accent-deep);font-weight:700;cursor:pointer;font-family:inherit;font-size:12px;padding:4px 8px;border-radius:999px;transition:all .2s}
   .auth-user-bar .au-logout:hover{background:var(--sage);color:#4a5d42}
+  .auth-user-bar .au-action{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-family:inherit;font-size:12px;padding:4px 6px;border-radius:999px;transition:all .2s;display:grid;place-items:center}
+  .auth-user-bar .au-action:hover{background:var(--paper-deep);color:var(--accent-deep)}
+  .offline-badge{font-size:10px;background:#e8c98a;color:#6b5a1e;padding:2px 8px;border-radius:999px;font-weight:700;white-space:nowrap}
 
   @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
 </style>
@@ -683,6 +686,7 @@
     </div>
     <h2>小宝的成长小宇宙</h2>
     <p class="auth-sub">数据云端保存，换手机登录也不丢失</p>
+    <p class="auth-hint" style="font-size:11px;color:var(--ink-faint);margin-top:4px">服务器不可达时可使用离线模式（需本设备曾登录过）</p>
 
     <!-- 登录表单 -->
     <div class="auth-form" id="loginForm">
@@ -733,6 +737,17 @@
   <div class="auth-user-bar hidden" id="userBar">
     <div class="au-avatar" id="userAvatar">?</div>
     <span id="userDisplay">—</span>
+    <span class="offline-badge" id="offlineBadge" style="display:none">离线</span>
+    <button class="au-action" id="syncBtn" title="同步数据" aria-label="同步数据">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+    </button>
+    <button class="au-action" id="exportBtn" title="导出数据" aria-label="导出数据">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+    <button class="au-action" id="importBtn" title="导入数据" aria-label="导入数据">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    </button>
+    <input type="file" id="importFile" accept=".json" style="display:none"/>
     <button class="au-logout" id="logoutBtn">退出</button>
   </div>
 </header>
@@ -1281,14 +1296,16 @@
 
 <script>
   /* ============================================================
-   * CLOUDFLARE WORKER API — 云端存储（多端点自动探测）
+   * CLOUDFLARE WORKER API — 云端存储（多端点自动探测 + 离线降级）
    * ============================================================ */
   const API_ENDPOINTS = [
-    'https://jwbb-api.jinyuwang109.workers.dev',
+    'https://jwbb-api.jinyiwang109.workers.dev',
     'https://jwbb-api.vercel.app',
   ];
   let API_BASE = API_ENDPOINTS[0]; // 默认用第一个，探测后会自动切换
   let _authToken = null; // 格式：uid:hash
+  let _isOnline = true;  // 服务器是否可达
+  let _isOfflineMode = false; // 是否运行在离线模式（完全本地）
 
   let currentUserId = null;
   let _saveTimer = null;
@@ -1308,6 +1325,7 @@
         clearTimeout(timer);
         if(resp.ok){
           API_BASE = ep;
+          _isOnline = true;
           console.log('API endpoint selected:', ep);
           return ep;
         }
@@ -1315,6 +1333,7 @@
         console.log('endpoint unreachable:', ep);
       }
     }
+    _isOnline = false;
     return null;
   }
 
@@ -1356,6 +1375,12 @@
     if(!currentUserId) return;
     _localCache = s;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    // 离线模式下保存到离线存储
+    if(_isOfflineMode){
+      updateOfflineData(currentUserId, _localCache);
+      _lastDataHash = JSON.stringify(_localCache);
+      return;
+    }
     clearTimeout(_storeDebounceTimer);
     _storeDebounceTimer = setTimeout(()=>{
       const toSave = {};
@@ -1372,9 +1397,13 @@
       apiBatch(toSave).then(()=>{
         _pendingSave = false;
         _lastDataHash = JSON.stringify(_localCache);
+        // 同步保存到离线存储
+        updateOfflineData(currentUserId, _localCache);
       }).catch(e=>{
         _pendingSave = false;
         console.warn('saveStore error',e);
+        // 保存失败时也更新离线存储
+        updateOfflineData(currentUserId, _localCache);
       });
       _lastDataHash = JSON.stringify(_localCache);
     }, 1000);
@@ -1388,14 +1417,21 @@
     _localCache.photos = photos;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
     _lastDataHash = JSON.stringify(_localCache);
+    // 离线模式直接存本地
+    if(_isOfflineMode){
+      updateOfflineData(currentUserId, _localCache);
+      return;
+    }
     _photoSaveTimer = setTimeout(()=>{
       _pendingSave = true;
       apiPut('photos', photos).then(()=>{
         _pendingSave = false;
         _lastDataHash = JSON.stringify(_localCache);
+        updateOfflineData(currentUserId, _localCache);
       }).catch(e=>{
         _pendingSave = false;
         console.warn('savePhotos error', e);
+        updateOfflineData(currentUserId, _localCache);
       });
     }, 800);
   }
@@ -1406,13 +1442,19 @@
     _localCache.photos = photos;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
     _lastDataHash = JSON.stringify(_localCache);
+    if(_isOfflineMode){
+      updateOfflineData(currentUserId, _localCache);
+      return;
+    }
     _pendingSave = true;
     apiPut('photos', photos).then(()=>{
       _pendingSave = false;
       _lastDataHash = JSON.stringify(_localCache);
+      updateOfflineData(currentUserId, _localCache);
     }).catch(e=>{
       _pendingSave = false;
       console.warn('savePhotos error', e);
+      updateOfflineData(currentUserId, _localCache);
     });
   }
   async function loadPhotosFromSub(){
@@ -1426,8 +1468,14 @@
     clearTimeout(_albumSaveTimer);
     _localCache.albums = albums;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
+    if(_isOfflineMode){
+      updateOfflineData(currentUserId, _localCache);
+      return;
+    }
     _albumSaveTimer = setTimeout(()=>{
-      apiPut('albums', albums).catch(e=>console.warn('saveAlbums error', e));
+      apiPut('albums', albums).then(()=>{
+        updateOfflineData(currentUserId, _localCache);
+      }).catch(e=>console.warn('saveAlbums error', e));
     }, 800);
   }
   function saveAlbumsImmediate(albums){
@@ -1435,7 +1483,13 @@
     clearTimeout(_albumSaveTimer);
     _localCache.albums = albums;
     try{localStorage.setItem(CACHE_KEY, JSON.stringify(_localCache))}catch(e){}
-    apiPut('albums', albums).catch(e=>console.warn('saveAlbums error', e));
+    if(_isOfflineMode){
+      updateOfflineData(currentUserId, _localCache);
+      return;
+    }
+    apiPut('albums', albums).then(()=>{
+      updateOfflineData(currentUserId, _localCache);
+    }).catch(e=>console.warn('saveAlbums error', e));
   }
   async function loadAlbumsFromSub(){
     return null;
@@ -3612,7 +3666,143 @@
       }catch(e){}
     }
 
-    // Login — 完全依赖 Worker 端认证，不使用 localStorage 存密码
+    // ---- 离线数据存储 ----
+    // 离线数据结构：{ [uid]: { hash: 'xxx', data: {...} } }
+    const OFFLINE_KEY = 'jwbb_offline_data';
+
+    function getOfflineStore(){
+      try{ return JSON.parse(localStorage.getItem(OFFLINE_KEY) || '{}'); }catch(e){ return {}; }
+    }
+
+    // 加载离线数据。密码不匹配返回 false，无数据返回 null，成功返回 data 对象
+    function loadOfflineData(uid, hash){
+      const store = getOfflineStore();
+      const entry = store[uid];
+      if(!entry) return null;
+      if(entry.hash !== hash) return false;
+      return entry.data || {};
+    }
+
+    // 保存离线数据（含密码 hash，用于离线验证）
+    function saveOfflineData(uid, hash, data){
+      try{
+        const store = getOfflineStore();
+        store[uid] = { hash, data, ts: Date.now() };
+        localStorage.setItem(OFFLINE_KEY, JSON.stringify(store));
+      }catch(e){ console.warn('saveOfflineData error', e); }
+    }
+
+    // 仅更新离线数据（不改变密码）
+    function updateOfflineData(uid, data){
+      try{
+        const store = getOfflineStore();
+        if(store[uid]){
+          store[uid].data = data;
+          store[uid].ts = Date.now();
+          localStorage.setItem(OFFLINE_KEY, JSON.stringify(store));
+        }
+      }catch(e){ console.warn('updateOfflineData error', e); }
+    }
+
+    // 离线模式标志更新
+    function updateOfflineBadge(){
+      const badge = document.getElementById('offlineBadge');
+      if(!badge) return;
+      badge.style.display = _isOfflineMode ? '' : 'none';
+    }
+
+    // 导出数据为 JSON 文件
+    function exportData(){
+      const data = Object.assign({}, _localCache);
+      data._exportTime = new Date().toISOString();
+      data._uid = currentUserId;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jwbb-backup-' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('数据已导出 ✦');
+    }
+
+    // 导入数据
+    function importData(file){
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try{
+          const imported = JSON.parse(e.target.result);
+          // 去掉导出时的元数据字段
+          delete imported._exportTime;
+          delete imported._uid;
+
+          applyCloudData(imported);
+
+          // 如果在线，同步到云端
+          if(_isOnline && _authToken){
+            await apiBatch(imported);
+            toast('数据导入并同步成功 ✦');
+          } else {
+            // 离线模式，保存到本地
+            updateOfflineData(currentUserId, imported);
+            toast('数据导入成功（离线保存）✦');
+          }
+        }catch(err){
+          toast('导入失败：文件格式错误');
+          console.error('import error', err);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 手动同步：尝试连接服务器
+    async function manualSync(){
+      toast('正在连接服务器...');
+      const ep = await detectBestEndpoint();
+      if(!ep){
+        toast('服务器不可达，仍为离线模式');
+        return;
+      }
+
+      // 服务器可达，同步本地离线数据
+      if(_authToken){
+        try{
+          // 先拉取云端数据
+          const cloudData = await apiGet('/data');
+          if(cloudData && cloudData.error){
+            toast('登录已失效，请重新登录');
+            logoutBtn.click();
+            return;
+          }
+
+          // 合并策略：以本地修改的数据为准上传，同时拉取云端更新
+          // 简单策略：上传本地数据到云端
+          const toSync = {};
+          const fields = ['letters', 'milestones', 'photos', 'albums', 'dailyEvents', 'dailyMeta', 'birthDate', 'mode', 'dueDate', 'nickname', 'username'];
+          fields.forEach(f => {
+            if(f in _localCache) toSync[f] = _localCache[f];
+          });
+
+          if(Object.keys(toSync).length > 0){
+            await apiBatch(toSync);
+            updateOfflineData(currentUserId, _localCache);
+          }
+
+          _isOfflineMode = false;
+          updateOfflineBadge();
+
+          // 用云端数据刷新
+          applyCloudData(cloudData, true);
+        }catch(err){
+          console.error('sync error', err);
+          toast('同步失败：' + (err.message || '未知错误'));
+        }
+      } else {
+        toast('请先登录');
+      }
+    }
+
+    // Login — 优先 Worker 端认证，服务器不可达时降级为离线模式
     loginBtn.addEventListener('click', async () => {
       const username = document.getElementById('loginUser').value.trim().toLowerCase();
       const password = document.getElementById('loginPass').value;
@@ -3630,7 +3820,45 @@
         const uid = account ? account.uid : ('user_' + username);
         const token = uid + ':' + inputHash;
 
-        // 用 Promise.race 实现超时（兼容不支持 AbortController 的浏览器）
+        // 先探测服务器是否可达
+        if(!_isOnline){
+          await detectBestEndpoint();
+        }
+
+        if(!_isOnline){
+          // ===== 离线模式 =====
+          // 检查本地是否有该用户的离线数据
+          const offlineData = loadOfflineData(uid, inputHash);
+          if(offlineData === false){
+            // 本地有数据但密码不匹配
+            loginError.textContent = '用户名或密码错误（离线模式）';
+            return;
+          }
+
+          // 离线登录成功
+          currentUserId = uid;
+          _authToken = token;
+          _isOfflineMode = true;
+          saveHash(username, inputHash);
+
+          showApp(username);
+          updateOfflineBadge();
+
+          if(offlineData){
+            // 使用本地离线数据
+            applyCloudData(offlineData);
+            toast('离线模式，使用本地数据 ✦');
+          } else {
+            // 首次离线登录，初始化空数据
+            saveOfflineData(uid, inputHash, {});
+            applyCloudData({});
+            toast('离线模式，密码已设置 ✦');
+          }
+          loginError.textContent = '';
+          return;
+        }
+
+        // ===== 在线模式 =====
         let cloudData = null;
         try{
           const fetchPromise = fetch(API_BASE + '/data', {
@@ -3645,7 +3873,28 @@
           cloudData = await Promise.race([fetchPromise, timeoutPromise]);
         }catch(e){
           console.error('login fetch error:', e);
-          loginError.textContent = '网络连接失败，无法连接服务器，请检查网络后重试';
+          // 服务器不可达，降级为离线模式
+          _isOnline = false;
+          _isOfflineMode = true;
+          const offlineData = loadOfflineData(uid, inputHash);
+          if(offlineData === false){
+            loginError.textContent = '用户名或密码错误（离线模式）';
+            return;
+          }
+          currentUserId = uid;
+          _authToken = token;
+          saveHash(username, inputHash);
+          showApp(username);
+          updateOfflineBadge();
+          if(offlineData){
+            applyCloudData(offlineData);
+            toast('服务器不可达，已切换离线模式 ✦');
+          } else {
+            saveOfflineData(uid, inputHash, {});
+            applyCloudData({});
+            toast('服务器不可达，已切换离线模式 ✦');
+          }
+          loginError.textContent = '';
           return;
         }
 
@@ -3662,12 +3911,17 @@
         // 认证成功
         currentUserId = uid;
         _authToken = token;
+        _isOfflineMode = false;
 
         // 判断是否是首次登录（Worker 端自动注册）
         const isFirstLogin = !getSavedHash(username);
         saveHash(username, inputHash);
 
+        // 同时保存离线副本（用于离线降级）
+        saveOfflineData(uid, inputHash, cloudData);
+
         showApp(username);
+        updateOfflineBadge();
 
         // 直接使用已拉取的云端数据，避免二次请求
         applyCloudData(cloudData);
@@ -3760,6 +4014,11 @@
 
     // Reload STATE from cloud & re-render
     async function reloadState(){
+      // 离线模式：使用本地缓存
+      if(_isOfflineMode){
+        applyCloudData(_localCache, false);
+        return;
+      }
       let mainData = {};
       let cloudOk = false;
       try{
@@ -3785,6 +4044,7 @@
     // ---- 实时同步：定时轮询云端数据，有变化则自动刷新 ----
     function startPolling(){
       stopPolling();
+      if(_isOfflineMode) return; // 离线模式不轮询
       _pollTimer = setInterval(async ()=>{
         if(!currentUserId || !_authToken) return;
         if(document.visibilityState === 'hidden') return;
@@ -3801,6 +4061,8 @@
           const hash = JSON.stringify(data);
           if(_lastDataHash && hash !== _lastDataHash){
             applyCloudData(data, false);
+            // 同步更新离线副本
+            updateOfflineData(currentUserId, _localCache);
           }
           _lastDataHash = hash;
         }catch(e){
@@ -3836,13 +4098,36 @@
       authScreen.style.display = 'none';
     });
 
+    // 导出数据
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      exportData();
+    });
+
+    // 导入数据（触发文件选择）
+    document.getElementById('importBtn').addEventListener('click', () => {
+      document.getElementById('importFile').click();
+    });
+
+    // 文件选择后导入
+    document.getElementById('importFile').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(file) importData(file);
+      e.target.value = ''; // 重置以便可重复选择同一文件
+    });
+
+    // 手动同步
+    document.getElementById('syncBtn').addEventListener('click', () => {
+      manualSync();
+    });
+
     // API 连通性预检 — 探测可达端点，在登录页显示服务器状态
     (async function checkConnectivity(){
       const statusEl = document.getElementById('serverStatus');
       if(!statusEl) return;
       const ok = await detectBestEndpoint();
       if(!ok){
-        statusEl.textContent = '⚠ 服务器不可达，请检查网络或稍后重试';
+        _isOfflineMode = true;
+        statusEl.textContent = '⚠ 服务器不可达，可使用离线模式登录（需本设备之前登录过）';
         statusEl.style.display = 'block';
       }else{
         statusEl.textContent = '';
@@ -3850,17 +4135,40 @@
       }
     })();
 
-    // 自动恢复登录状态（需要网络验证）
+    // 自动恢复登录状态
     try{
       const session = JSON.parse(localStorage.getItem('jwbb_session') || 'null');
       if(session && session.username && session.uid && session.token){
         currentUserId = session.uid;
         _authToken = session.token;
-        showApp(session.username);
-        // 异步验证 token 是否仍然有效
-        reloadState().catch(()=>{
-          console.warn('session restore failed');
-        });
+
+        // 检查服务器是否可达，决定在线/离线模式
+        if(!_isOnline){
+          await detectBestEndpoint();
+        }
+
+        if(!_isOnline){
+          // 服务器不可达，尝试离线恢复
+          const [uid, hash] = session.token.split(':');
+          const offlineData = loadOfflineData(uid, hash);
+          if(offlineData === false){
+            // 密码不匹配，需要重新登录
+            renderAll();
+          } else {
+            _isOfflineMode = true;
+            showApp(session.username);
+            updateOfflineBadge();
+            applyCloudData(offlineData || _localCache);
+            toast('离线模式，使用本地数据 ✦');
+          }
+        } else {
+          // 服务器可达，在线恢复
+          showApp(session.username);
+          updateOfflineBadge();
+          reloadState().catch(()=>{
+            console.warn('session restore failed');
+          });
+        }
       } else {
         renderAll();
       }
