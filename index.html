@@ -1281,9 +1281,13 @@
 
 <script>
   /* ============================================================
-   * CLOUDFLARE WORKER API — 云端存储
+   * CLOUDFLARE WORKER API — 云端存储（多端点自动探测）
    * ============================================================ */
-  const API_BASE = 'https://jwbb-api.jinyuwang109.workers.dev';
+  const API_ENDPOINTS = [
+    'https://jwbb-api.jinyuwang109.workers.dev',
+    'https://jwbb-api.vercel.app',
+  ];
+  let API_BASE = API_ENDPOINTS[0]; // 默认用第一个，探测后会自动切换
   let _authToken = null; // 格式：uid:hash
 
   let currentUserId = null;
@@ -1293,6 +1297,26 @@
   let _pollTimer = null;
   let _lastDataHash = '';
   let _pendingSave = false; // 标记本地有写入正在等待云端确认
+
+  // 探测最快的可达端点
+  async function detectBestEndpoint(){
+    for(const ep of API_ENDPOINTS){
+      try{
+        const ctrl = new AbortController();
+        const timer = setTimeout(()=>ctrl.abort(), 5000);
+        const resp = await fetch(ep + '/health', { mode:'cors', signal: ctrl.signal });
+        clearTimeout(timer);
+        if(resp.ok){
+          API_BASE = ep;
+          console.log('API endpoint selected:', ep);
+          return ep;
+        }
+      }catch(e){
+        console.log('endpoint unreachable:', ep);
+      }
+    }
+    return null;
+  }
 
   // API 请求工具函数
   async function apiGet(path){
@@ -3812,20 +3836,17 @@
       authScreen.style.display = 'none';
     });
 
-    // API 连通性预检 — 在登录页显示服务器状态
+    // API 连通性预检 — 探测可达端点，在登录页显示服务器状态
     (async function checkConnectivity(){
       const statusEl = document.getElementById('serverStatus');
       if(!statusEl) return;
-      try{
-        const ctrl = new AbortController();
-        const timer = setTimeout(()=>ctrl.abort(), 8000);
-        await fetch(API_BASE + '/health', { mode: 'cors', signal: ctrl.signal });
-        clearTimeout(timer);
-        statusEl.textContent = '';
-        statusEl.style.display = 'none';
-      }catch(e){
+      const ok = await detectBestEndpoint();
+      if(!ok){
         statusEl.textContent = '⚠ 服务器不可达，请检查网络或稍后重试';
         statusEl.style.display = 'block';
+      }else{
+        statusEl.textContent = '';
+        statusEl.style.display = 'none';
       }
     })();
 
